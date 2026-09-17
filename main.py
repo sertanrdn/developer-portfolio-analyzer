@@ -20,10 +20,11 @@ else:
     print("GitHub username:", cleaned_username)
 
     url = f"https://api.github.com/users/{cleaned_username}/repos"
-    print(url)
 
-    response = requests.get(url)
-    print(response.status_code)
+    request_headers = {
+        "Authorization": f"Bearer {github_token}"
+    }
+
+    response = requests.get(url, headers=request_headers)
 
     repositories = response.json()
-    print(type(repositories))
