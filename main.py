@@ -28,3 +28,6 @@ else:
     response = requests.get(url, headers=request_headers)
 
     repositories = response.json()
+
+    for repository in repositories:
+        print(repository["name"])
