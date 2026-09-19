@@ -26,8 +26,21 @@ else:
     }
 
     response = requests.get(url, headers=request_headers)
-
     repositories = response.json()
 
+    processed_repositories = []
+
     for repository in repositories:
-        print(repository["name"])
+        repo_data = {
+            "name": repository.get("name"),
+            "description": repository.get("description"),
+            "language": repository.get("language"),
+            "topics": repository.get("topics", []),
+            "fork": repository.get("fork"),
+            "archived": repository.get("archived"),
+            "created_at": repository.get("created_at"),
+            "pushed_at": repository.get("pushed_at")
+        }
+
+        processed_repositories.append(repo_data)
+    print(processed_repositories)
