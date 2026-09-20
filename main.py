@@ -15,21 +15,7 @@ else:
 username = input("Enter GitHub username: ")
 cleaned_username = username.strip()
 
-if not cleaned_username:
-    print("Error: GitHub username is required.")
-else:
-    print("GitHub username:", cleaned_username)
-
-    # Get the repo data from github api
-    url = f"https://api.github.com/users/{cleaned_username}/repos"
-
-    request_headers = {
-        "Authorization": f"Bearer {github_token}"
-    }
-
-    response = requests.get(url, headers=request_headers)
-    repositories = response.json()
-
+def process_repositories(repositories):
     processed_repositories = []
 
     for repository in repositories:
@@ -45,7 +31,9 @@ else:
         }
 
         processed_repositories.append(repo_data)
+    return processed_repositories
 
+def get_repository_summary(processed_repositories):
     # Get the repo summary count
     total_repositories = len(processed_repositories)
     forked_repositories = 0
@@ -60,11 +48,16 @@ else:
     
     original_repositories = total_repositories - forked_repositories
 
-    print("Total repositories:", total_repositories)
-    print("Original repositories:", original_repositories)
-    print("Forked repositories:", forked_repositories)
-    print("Archived repositories:", archived_repositories)
+    summary_repositories = {
+        "total": total_repositories,
+        "original": original_repositories,
+        "forked": forked_repositories,
+        "archived": archived_repositories
+    }
 
+    return summary_repositories
+
+def analyze_languages(processed_repositories):
     # Language analysis for repos
     language_counts = {}
     no_language_count = 0
@@ -80,6 +73,34 @@ else:
                     language_counts[language] += 1
                 else:
                     language_counts[language] = 1
+
+    return language_counts, no_language_count
+
+if not cleaned_username:
+    print("Error: GitHub username is required.")
+else:
+    print("GitHub username:", cleaned_username)
+
+    # Get the repo data from github api
+    url = f"https://api.github.com/users/{cleaned_username}/repos"
+
+    request_headers = {
+        "Authorization": f"Bearer {github_token}"
+    }
+
+    response = requests.get(url, headers=request_headers)
+    repositories = response.json()
+
+    processed_repositories = process_repositories(repositories)
+    repository_summary = get_repository_summary(processed_repositories)
+    language_counts, no_language_count = analyze_languages(processed_repositories)
+
+    original_repositories = repository_summary["original"]
+
+    print("Total repositories:", repository_summary["total"])
+    print("Original repositories:", repository_summary["original"])
+    print("Forked repositories:", repository_summary["forked"])
+    print("Archived repositories:", repository_summary["archived"])
 
     print("Primary languages (original repositories):")
     for language, count in language_counts.items():
