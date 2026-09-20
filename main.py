@@ -89,87 +89,93 @@ else:
     }
 
     response = requests.get(url, headers=request_headers)
-    repositories = response.json()
 
-    processed_repositories = process_repositories(repositories)
-    repository_summary = get_repository_summary(processed_repositories)
-    language_counts, no_language_count = analyze_languages(processed_repositories)
+    if response.status_code == 200:
+        repositories = response.json()
 
-    original_repositories = repository_summary["original"]
+        processed_repositories = process_repositories(repositories)
+        repository_summary = get_repository_summary(processed_repositories)
+        language_counts, no_language_count = analyze_languages(processed_repositories)
 
-    print("Total repositories:", repository_summary["total"])
-    print("Original repositories:", repository_summary["original"])
-    print("Forked repositories:", repository_summary["forked"])
-    print("Archived repositories:", repository_summary["archived"])
+        original_repositories = repository_summary["original"]
 
-    print("Primary languages (original repositories):")
-    for language, count in language_counts.items():
-        print(language, count, sep=": ")
-    print("No primary language:", no_language_count)
+        print("Total repositories:", repository_summary["total"])
+        print("Original repositories:", repository_summary["original"])
+        print("Forked repositories:", repository_summary["forked"])
+        print("Archived repositories:", repository_summary["archived"])
 
-    # Get the description and topic coverages for repos
-    repo_with_desc = 0
-    repo_without_desc = 0
+        print("Primary languages (original repositories):")
+        for language, count in language_counts.items():
+            print(language, count, sep=": ")
+        print("No primary language:", no_language_count)
 
-    for repository in processed_repositories:
-        if not repository.get("fork"):
-            if repository.get("description"):
-                repo_with_desc += 1
-            else:
-                repo_without_desc += 1
+        # Get the description and topic coverages for repos
+        repo_with_desc = 0
+        repo_without_desc = 0
 
-    repo_with_topics = 0
-    repo_without_topics = 0
+        for repository in processed_repositories:
+            if not repository.get("fork"):
+                if repository.get("description"):
+                    repo_with_desc += 1
+                else:
+                    repo_without_desc += 1
 
-    for repository in processed_repositories:
-        if not repository.get("fork"):
-            if repository.get("topics"):
-                repo_with_topics += 1
-            else: 
-                repo_without_topics += 1
+        repo_with_topics = 0
+        repo_without_topics = 0
 
-    description_coverage = round((repo_with_desc / original_repositories) * 100, 2)
-    topics_coverage = round((repo_with_topics / original_repositories) * 100, 2)
+        for repository in processed_repositories:
+            if not repository.get("fork"):
+                if repository.get("topics"):
+                    repo_with_topics += 1
+                else: 
+                    repo_without_topics += 1
 
-    print("Description coverage:")
-    print("With description:", repo_with_desc)
-    print("Without description:", repo_without_desc)
-    print(f"Coverage: {description_coverage}%")
+        description_coverage = round((repo_with_desc / original_repositories) * 100, 2)
+        topics_coverage = round((repo_with_topics / original_repositories) * 100, 2)
 
-    print("Topics coverage:")
-    print("With topics:", repo_with_topics)
-    print("Without topics:", repo_without_topics)
-    print(f"Coverage: {topics_coverage}%")
+        print("Description coverage:")
+        print("With description:", repo_with_desc)
+        print("Without description:", repo_without_desc)
+        print(f"Coverage: {description_coverage}%")
 
-    # Calculating the recent activity
-    recent_repositories = []
+        print("Topics coverage:")
+        print("With topics:", repo_with_topics)
+        print("Without topics:", repo_without_topics)
+        print(f"Coverage: {topics_coverage}%")
 
-    for repository in processed_repositories:
-        if not repository.get("fork"):
-            date_string = repository.get("pushed_at")
+        # Calculating the recent activity
+        recent_repositories = []
 
-            if date_string:
-                date_object = datetime.fromisoformat(date_string)
+        for repository in processed_repositories:
+            if not repository.get("fork"):
+                date_string = repository.get("pushed_at")
 
-                activity_data = {
-                    "name": repository.get("name"),
-                    "pushed_at": date_object
-                }
-                recent_repositories.append(activity_data)
+                if date_string:
+                    date_object = datetime.fromisoformat(date_string)
 
-    sorted_repositories = sorted(
-        recent_repositories,
-        key=lambda repository: repository["pushed_at"],
-        reverse=True
-    )
+                    activity_data = {
+                        "name": repository.get("name"),
+                        "pushed_at": date_object
+                    }
+                    recent_repositories.append(activity_data)
 
-    # Get the activity within last 90 days
-    recently_active_count = 0
-    current_time = datetime.now(timezone.utc)
+        sorted_repositories = sorted(
+            recent_repositories,
+            key=lambda repository: repository["pushed_at"],
+            reverse=True
+        )
 
-    for repository in sorted_repositories:
-        time_since_push = current_time - repository["pushed_at"]
+        # Get the activity within last 90 days
+        recently_active_count = 0
+        current_time = datetime.now(timezone.utc)
 
-        if time_since_push.days <= 90:
-            recently_active_count += 1
-    print(f"Recently active original repositories (last 90 days): {recently_active_count} of {original_repositories}")
+        for repository in sorted_repositories:
+            time_since_push = current_time - repository["pushed_at"]
+
+            if time_since_push.days <= 90:
+                recently_active_count += 1
+        print(f"Recently active original repositories (last 90 days): {recently_active_count} of {original_repositories}")
+    elif response.status_code == 404:
+        print("Error: GitHub user not found.")
+    else:
+        print(f"Error: GitHub request failed with status code {response.status_code}.")
