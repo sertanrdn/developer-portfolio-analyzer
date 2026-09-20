@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 import requests
+from datetime import datetime, timezone
 
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")
@@ -118,3 +119,36 @@ else:
     print("With topics:", repo_with_topics)
     print("Without topics:", repo_without_topics)
     print(f"Coverage: {topics_coverage}%")
+
+    # Calculating the recent activity
+    recent_repositories = []
+
+    for repository in processed_repositories:
+        if not repository.get("fork"):
+            date_string = repository.get("pushed_at")
+
+            if date_string:
+                date_object = datetime.fromisoformat(date_string)
+
+                activity_data = {
+                    "name": repository.get("name"),
+                    "pushed_at": date_object
+                }
+                recent_repositories.append(activity_data)
+
+    sorted_repositories = sorted(
+        recent_repositories,
+        key=lambda repository: repository["pushed_at"],
+        reverse=True
+    )
+
+    # Get the activity within last 90 days
+    recently_active_count = 0
+    current_time = datetime.now(timezone.utc)
+
+    for repository in sorted_repositories:
+        time_since_push = current_time - repository["pushed_at"]
+
+        if time_since_push.days <= 90:
+            recently_active_count += 1
+    print(f"Recently active original repositories (last 90 days): {recently_active_count} of {original_repositories}")
