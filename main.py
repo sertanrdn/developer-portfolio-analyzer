@@ -43,4 +43,21 @@ else:
         }
 
         processed_repositories.append(repo_data)
-    print(processed_repositories)
+
+    total_repositories = len(processed_repositories)
+    forked_repositories = 0
+    archived_repositories = 0
+
+    for repository in processed_repositories:
+        if repository.get("fork"):
+            forked_repositories += 1
+        
+        if repository.get("archived"):
+            archived_repositories += 1
+    
+    original_repositories = total_repositories - forked_repositories
+
+    print("Total repositories:", total_repositories)
+    print("Original repositories:", original_repositories)
+    print("Forked repositories:", forked_repositories)
+    print("Archived repositories:", archived_repositories)
