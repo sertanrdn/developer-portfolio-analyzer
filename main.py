@@ -84,3 +84,37 @@ else:
     for language, count in language_counts.items():
         print(language, count, sep=": ")
     print("No primary language:", no_language_count)
+
+    # Get the description and topic coverages for repos
+    repo_with_desc = 0
+    repo_without_desc = 0
+
+    for repository in processed_repositories:
+        if not repository.get("fork"):
+            if repository.get("description"):
+                repo_with_desc += 1
+            else:
+                repo_without_desc += 1
+
+    repo_with_topics = 0
+    repo_without_topics = 0
+
+    for repository in processed_repositories:
+        if not repository.get("fork"):
+            if repository.get("topics"):
+                repo_with_topics += 1
+            else: 
+                repo_without_topics += 1
+
+    description_coverage = round((repo_with_desc / original_repositories) * 100, 2)
+    topics_coverage = round((repo_with_topics / original_repositories) * 100, 2)
+
+    print("Description coverage:")
+    print("With description:", repo_with_desc)
+    print("Without description:", repo_without_desc)
+    print(f"Coverage: {description_coverage}%")
+
+    print("Topics coverage:")
+    print("With topics:", repo_with_topics)
+    print("Without topics:", repo_without_topics)
+    print(f"Coverage: {topics_coverage}%")
