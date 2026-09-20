@@ -130,8 +130,12 @@ else:
                 else: 
                     repo_without_topics += 1
 
-        description_coverage = round((repo_with_desc / original_repositories) * 100, 2)
-        topics_coverage = round((repo_with_topics / original_repositories) * 100, 2)
+        if original_repositories > 0:
+            description_coverage = round((repo_with_desc / original_repositories) * 100, 2)
+            topics_coverage = round((repo_with_topics / original_repositories) * 100, 2)
+        else:
+            description_coverage = 0
+            topics_coverage = 0
 
         print("Description coverage:")
         print("With description:", repo_with_desc)
