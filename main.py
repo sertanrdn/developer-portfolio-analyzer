@@ -19,6 +19,7 @@ if not cleaned_username:
 else:
     print("GitHub username:", cleaned_username)
 
+    # Get the repo data from github api
     url = f"https://api.github.com/users/{cleaned_username}/repos"
 
     request_headers = {
@@ -44,6 +45,7 @@ else:
 
         processed_repositories.append(repo_data)
 
+    # Get the repo summary count
     total_repositories = len(processed_repositories)
     forked_repositories = 0
     archived_repositories = 0
@@ -61,3 +63,24 @@ else:
     print("Original repositories:", original_repositories)
     print("Forked repositories:", forked_repositories)
     print("Archived repositories:", archived_repositories)
+
+    # Language analysis for repos
+    language_counts = {}
+    no_language_count = 0
+
+    for repository in processed_repositories:
+        if not repository.get("fork"):
+            language = repository.get("language")
+
+            if language is None:
+                no_language_count += 1
+            else:
+                if language in language_counts:
+                    language_counts[language] += 1
+                else:
+                    language_counts[language] = 1
+
+    print("Primary languages (original repositories):")
+    for language, count in language_counts.items():
+        print(language, count, sep=": ")
+    print("No primary language:", no_language_count)
