@@ -135,3 +135,26 @@ def analyze_recent_activity(processed_repositories):
             recently_active_count += 1
 
     return sorted_repositories, recently_active_count
+
+def analyze_readme_coverage(readme_results, original_repositories):
+    with_readme = 0
+    without_readme = 0
+
+    for repository in readme_results:
+        if repository.get("has_readme"):
+            with_readme += 1
+        else:
+            without_readme += 1
+
+    if original_repositories > 0:
+        readme_coverage = round((with_readme / original_repositories) * 100, 2)
+    else:
+        readme_coverage = 0
+    
+    readme_data = {
+        "with_readme": with_readme,
+        "without_readme": without_readme,
+        "readme_coverage": readme_coverage
+    }
+
+    return readme_data
