@@ -61,6 +61,24 @@ def analyze_languages(processed_repositories):
 
     return language_counts, no_language_count
 
+def analyze_detailed_languages(language_results):
+    language_repo_counts = {}
+    no_language_data_count = 0
+
+    for repository in language_results:
+        languages_dict = repository.get("languages")
+
+        if not languages_dict:
+            no_language_data_count += 1
+        else:
+            for language in languages_dict:
+                if language in language_repo_counts:
+                    language_repo_counts[language] += 1
+                else:
+                    language_repo_counts[language] = 1
+    
+    return language_repo_counts, no_language_data_count
+
 def analyze_metadata_coverage(processed_repositories, original_repositories):
     # Get the description and topic coverages for repos
     repo_with_desc = 0

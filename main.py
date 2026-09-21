@@ -6,6 +6,7 @@ from analysis import (
     process_repositories,
     get_repository_summary,
     analyze_languages,
+    analyze_detailed_languages,
     analyze_metadata_coverage,
     analyze_recent_activity,
     analyze_readme_coverage
@@ -62,8 +63,25 @@ else:
                     }
                     readme_results.append(readme_data)
 
+        language_results = []
+        for repository in processed_repositories:
+            if not repository.get("fork"):
+                repo_name = repository.get("name")
+                language_url = f"https://api.github.com/repos/{cleaned_username}/{repo_name}/languages"
+
+                language_response = requests.get(language_url, headers=request_headers)
+
+                if language_response.status_code == 200:
+                    language_dict = language_response.json()
+                    language_data = {
+                        "repo_name": repo_name,
+                        "languages": language_dict
+                    }
+                    language_results.append(language_data)
+
         repository_summary = get_repository_summary(processed_repositories)
         language_counts, no_language_count = analyze_languages(processed_repositories)
+        language_repo_counts, no_language_data_count = analyze_detailed_languages(language_results)
 
         original_repositories = repository_summary["original"]
         metadata_analysis = analyze_metadata_coverage(
@@ -85,6 +103,11 @@ else:
         for language, count in language_counts.items():
             print(language, count, sep=": ")
         print("No primary language:", no_language_count)
+
+        print("Languages across original repositories:")
+        for language, count in language_repo_counts.items():
+            print(language, count, sep=": ")
+        print("No detected language data:", no_language_data_count)
 
         print("Description coverage:")
         print("With description:", metadata_analysis["with_description"])
