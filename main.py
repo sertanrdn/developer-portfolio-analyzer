@@ -120,6 +120,14 @@ else:
         print(f"Coverage: {metadata_analysis['topics_coverage']}%")
 
         print(f"Recently active original repositories (last 90 days): {recently_active_count} of {original_repositories}")
+        print("Recently updated repositories:")
+        for repository in sorted_repositories[:3]:
+            repo_name = repository.get("name")
+            pushed_at = repository.get("pushed_at")
+
+            formatted_date = pushed_at.strftime("%Y-%m-%d")
+
+            print(f"{repo_name} — {formatted_date}")
 
         print("README Coverage:")
         print("With Readme:", readme_analysis["with_readme"])
