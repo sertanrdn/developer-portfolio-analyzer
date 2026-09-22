@@ -35,11 +35,35 @@ else:
         "Authorization": f"Bearer {github_token}"
     }
 
-    response = requests.get(url, headers=request_headers)
+    page = 1
+    repositories = []
+    fetch_successful = False
 
-    if response.status_code == 200:
-        repositories = response.json()
+    while True:
+        parameters = {
+            "per_page": 100,
+            "page": page
+        }
 
+        response = requests.get(url, headers=request_headers, params=parameters)
+
+        if response.status_code == 200:
+            page_repositories = response.json()
+
+            if not page_repositories:
+                fetch_successful = True
+                break
+        
+            repositories.extend(page_repositories)
+            page += 1
+        elif response.status_code == 404:
+            print("Error: GitHub user not found.")
+            break
+        else:
+            print(f"Error: GitHub request failed with status code {response.status_code}.")
+            break
+    
+    if fetch_successful:
         processed_repositories = process_repositories(repositories)
 
         readme_results = []
@@ -140,7 +164,3 @@ else:
         print("Without README:", readme_analysis["without_readme"])
         print("Unknown README status:", readme_analysis["unknown_readme"])
         print(f"Coverage: {readme_analysis['readme_coverage']}%")
-    elif response.status_code == 404:
-        print("Error: GitHub user not found.")
-    else:
-        print(f"Error: GitHub request failed with status code {response.status_code}.")
