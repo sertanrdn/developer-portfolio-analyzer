@@ -28,7 +28,7 @@ def get_repository_summary(processed_repositories):
         if repository.get("fork"):
             forked_repositories += 1
         
-        if repository.get("archived"):
+        if repository.get("archived") and not repository.get("fork"):
             archived_repositories += 1
     
     original_repositories = total_repositories - forked_repositories
@@ -120,7 +120,7 @@ def analyze_metadata_coverage(processed_repositories, original_repositories):
     return metadata_analysis
 
 def analyze_recent_activity(processed_repositories):
-    # Calculating the recent activity
+    # Calculate recent activity
     recent_repositories = []
 
     for repository in processed_repositories:
@@ -154,24 +154,31 @@ def analyze_recent_activity(processed_repositories):
 
     return sorted_repositories, recently_active_count
 
-def analyze_readme_coverage(readme_results, original_repositories):
+def analyze_readme_coverage(readme_results):
     with_readme = 0
     without_readme = 0
+    unknown_readme = 0
 
     for repository in readme_results:
-        if repository.get("has_readme"):
+        has_readme = repository.get("has_readme")
+        if has_readme is True:
             with_readme += 1
-        else:
+        elif has_readme is False:
             without_readme += 1
+        else:
+            unknown_readme += 1
 
-    if original_repositories > 0:
-        readme_coverage = round((with_readme / original_repositories) * 100, 2)
+    known_readme_results = with_readme + without_readme
+
+    if known_readme_results > 0:
+        readme_coverage = round((with_readme / known_readme_results) * 100, 2)
     else:
         readme_coverage = 0
     
     readme_data = {
         "with_readme": with_readme,
         "without_readme": without_readme,
+        "unknown_readme": unknown_readme,
         "readme_coverage": readme_coverage
     }
 

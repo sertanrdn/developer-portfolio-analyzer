@@ -62,6 +62,12 @@ else:
                         "has_readme": False
                     }
                     readme_results.append(readme_data)
+                else:
+                    readme_data = {
+                        "repo_name": repo_name,
+                        "has_readme": None
+                    }
+                    readme_results.append(readme_data)
 
         language_results = []
         for repository in processed_repositories:
@@ -92,12 +98,12 @@ else:
             processed_repositories
         )
 
-        readme_analysis = analyze_readme_coverage(readme_results, original_repositories)
+        readme_analysis = analyze_readme_coverage(readme_results)
 
         print("Total repositories:", repository_summary["total"])
         print("Original repositories:", repository_summary["original"])
         print("Forked repositories:", repository_summary["forked"])
-        print("Archived repositories:", repository_summary["archived"])
+        print("Archived original repositories:", repository_summary["archived"])
 
         print("Primary languages (original repositories):")
         for language, count in language_counts.items():
@@ -129,9 +135,10 @@ else:
 
             print(f"{repo_name} — {formatted_date}")
 
-        print("README Coverage:")
-        print("With Readme:", readme_analysis["with_readme"])
-        print("Without Readme:", readme_analysis["without_readme"])
+        print("README coverage:")
+        print("With README:", readme_analysis["with_readme"])
+        print("Without README:", readme_analysis["without_readme"])
+        print("Unknown README status:", readme_analysis["unknown_readme"])
         print(f"Coverage: {readme_analysis['readme_coverage']}%")
     elif response.status_code == 404:
         print("Error: GitHub user not found.")
