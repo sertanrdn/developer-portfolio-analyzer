@@ -1,4 +1,5 @@
 import os
+import sys
 
 from dotenv import load_dotenv
 import requests
@@ -15,10 +16,10 @@ from analysis import (
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")
 
-if github_token:
-    print("Github token loaded successfully")
-else:
+if not github_token:
     print("Error: GitHub token not found.")
+    sys.exit(1)
+print("GitHub token loaded successfully.")
 
 username = input("Enter GitHub username: ")
 cleaned_username = username.strip()
@@ -45,7 +46,19 @@ else:
             "page": page
         }
 
-        response = requests.get(url, headers=request_headers, params=parameters)
+        try:
+            response = requests.get(
+                url, headers=request_headers, params=parameters, timeout=10
+            )
+        except requests.exceptions.Timeout:
+            print("Error: GitHub request timed out.")
+            break
+        except requests.exceptions.ConnectionError:
+            print("Error: could not connect to GitHub.")
+            break
+        except requests.exceptions.RequestException:
+            print("Error: GitHub request failed.")
+            break
 
         if response.status_code == 200:
             page_repositories = response.json()
@@ -72,7 +85,9 @@ else:
                 repo_name = repository.get("name")
                 readme_url = f"https://api.github.com/repos/{cleaned_username}/{repo_name}/readme"
 
-                readme_response = requests.get(readme_url, headers=request_headers)
+                readme_response = requests.get(
+                    readme_url, headers=request_headers, timeout=10
+                )
 
                 if readme_response.status_code == 200:
                     readme_data = {
@@ -99,7 +114,9 @@ else:
                 repo_name = repository.get("name")
                 language_url = f"https://api.github.com/repos/{cleaned_username}/{repo_name}/languages"
 
-                language_response = requests.get(language_url, headers=request_headers)
+                language_response = requests.get(
+                    language_url, headers=request_headers, timeout=10
+                )
 
                 if language_response.status_code == 200:
                     language_dict = language_response.json()
