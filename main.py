@@ -54,7 +54,7 @@ else:
             print("Error: GitHub request timed out.")
             break
         except requests.exceptions.ConnectionError:
-            print("Error: could not connect to GitHub.")
+            print("Error: Could not connect to GitHub.")
             break
         except requests.exceptions.RequestException:
             print("Error: GitHub request failed.")
@@ -71,6 +71,18 @@ else:
             page += 1
         elif response.status_code == 404:
             print("Error: GitHub user not found.")
+            break
+        elif response.status_code == 401:
+            print("Error: Authentication failed. Please check your GitHub token or credentials.")
+            break
+        elif response.status_code == 403:
+            remaining_requests = response.headers.get("X-RateLimit-Remaining")
+
+            if remaining_requests == "0":
+                print("Rate-limit error: You have hit your GitHub API request limit.")
+            else:
+                print("Error: GitHub denied the request.")
+
             break
         else:
             print(f"Error: GitHub request failed with status code {response.status_code}.")
@@ -128,6 +140,20 @@ else:
                         "has_readme": False
                     }
                     readme_results.append(readme_data)
+                elif readme_response.status_code == 401:
+                    print(f"Warning: Authentication failed while checking README for {repo_name}.")
+                    readme_data = {
+                        "repo_name": repo_name,
+                        "has_readme": None
+                    }
+                    readme_results.append(readme_data)
+                elif readme_response.status_code == 403:
+                    print(f"Warning: GitHub denied the README request for {repo_name}.")
+                    readme_data = {
+                        "repo_name": repo_name,
+                        "has_readme": None
+                    }
+                    readme_results.append(readme_data)
                 else:
                     readme_data = {
                         "repo_name": repo_name,
@@ -177,6 +203,20 @@ else:
                     language_data = {
                         "repo_name": repo_name,
                         "languages": language_dict
+                    }
+                    language_results.append(language_data)
+                elif language_response.status_code == 401:
+                    print(f"Warning: Authentication failed while checking languages for {repo_name}.")
+                    language_data = {
+                        "repo_name": repo_name,
+                        "languages": None
+                    }
+                    language_results.append(language_data)
+                elif language_response.status_code == 403:
+                    print(f"Warning: GitHub denied the languages request for {repo_name}.")
+                    language_data = {
+                        "repo_name": repo_name,
+                        "languages": None
                     }
                     language_results.append(language_data)
                 else:
