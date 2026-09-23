@@ -1,4 +1,5 @@
 import os
+import sys
 
 from dotenv import load_dotenv
 import requests
@@ -15,10 +16,10 @@ from analysis import (
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")
 
-if github_token:
-    print("Github token loaded successfully")
-else:
+if not github_token:
     print("Error: GitHub token not found.")
+    sys.exit(1)
+print("GitHub token loaded successfully.")
 
 username = input("Enter GitHub username: ")
 cleaned_username = username.strip()
@@ -45,7 +46,19 @@ else:
             "page": page
         }
 
-        response = requests.get(url, headers=request_headers, params=parameters)
+        try:
+            response = requests.get(
+                url, headers=request_headers, params=parameters, timeout=10
+            )
+        except requests.exceptions.Timeout:
+            print("Error: GitHub request timed out.")
+            break
+        except requests.exceptions.ConnectionError:
+            print("Error: Could not connect to GitHub.")
+            break
+        except requests.exceptions.RequestException:
+            print("Error: GitHub request failed.")
+            break
 
         if response.status_code == 200:
             page_repositories = response.json()
@@ -58,6 +71,18 @@ else:
             page += 1
         elif response.status_code == 404:
             print("Error: GitHub user not found.")
+            break
+        elif response.status_code == 401:
+            print("Error: Authentication failed. Please check your GitHub token or credentials.")
+            break
+        elif response.status_code == 403:
+            remaining_requests = response.headers.get("X-RateLimit-Remaining")
+
+            if remaining_requests == "0":
+                print("Rate-limit error: You have hit your GitHub API request limit.")
+            else:
+                print("Error: GitHub denied the request.")
+
             break
         else:
             print(f"Error: GitHub request failed with status code {response.status_code}.")
@@ -72,7 +97,35 @@ else:
                 repo_name = repository.get("name")
                 readme_url = f"https://api.github.com/repos/{cleaned_username}/{repo_name}/readme"
 
-                readme_response = requests.get(readme_url, headers=request_headers)
+                try:
+                    readme_response = requests.get(
+                        readme_url, headers=request_headers, timeout=10
+                    )
+
+                except requests.exceptions.Timeout:
+                    print(f"Warning: README request timed out for {repo_name}.")
+                    readme_data = {
+                        "repo_name": repo_name,
+                        "has_readme": None
+                    }
+                    readme_results.append(readme_data)
+                    continue
+                except requests.exceptions.ConnectionError:
+                    print(f"Warning: Could not connect to GitHub while checking README for {repo_name}.")
+                    readme_data = {
+                        "repo_name": repo_name,
+                        "has_readme": None
+                    }
+                    readme_results.append(readme_data)
+                    continue
+                except requests.exceptions.RequestException:
+                    print(f"Warning: README request failed for {repo_name}.")
+                    readme_data = {
+                        "repo_name": repo_name,
+                        "has_readme": None
+                    }
+                    readme_results.append(readme_data)
+                    continue
 
                 if readme_response.status_code == 200:
                     readme_data = {
@@ -80,10 +133,25 @@ else:
                         "has_readme": True
                     }
                     readme_results.append(readme_data)
+
                 elif readme_response.status_code == 404:
                     readme_data = {
                         "repo_name": repo_name,
                         "has_readme": False
+                    }
+                    readme_results.append(readme_data)
+                elif readme_response.status_code == 401:
+                    print(f"Warning: Authentication failed while checking README for {repo_name}.")
+                    readme_data = {
+                        "repo_name": repo_name,
+                        "has_readme": None
+                    }
+                    readme_results.append(readme_data)
+                elif readme_response.status_code == 403:
+                    print(f"Warning: GitHub denied the README request for {repo_name}.")
+                    readme_data = {
+                        "repo_name": repo_name,
+                        "has_readme": None
                     }
                     readme_results.append(readme_data)
                 else:
@@ -99,7 +167,36 @@ else:
                 repo_name = repository.get("name")
                 language_url = f"https://api.github.com/repos/{cleaned_username}/{repo_name}/languages"
 
-                language_response = requests.get(language_url, headers=request_headers)
+                try:
+                    language_response = requests.get(
+                        language_url, headers=request_headers, timeout=10
+                    )
+                except requests.exceptions.Timeout:
+                    print(f"Warning: Language request timed out for {repo_name}.")
+                    language_data = {
+                        "repo_name": repo_name,
+                        "languages": None
+                    }
+                    language_results.append(language_data)
+                    continue
+
+                except requests.exceptions.ConnectionError:
+                    print(f"Warning: Could not connect to GitHub while checking languages for {repo_name}.")
+                    language_data = {
+                        "repo_name": repo_name,
+                        "languages": None
+                    }
+                    language_results.append(language_data)
+                    continue
+
+                except requests.exceptions.RequestException:
+                    print(f"Warning: Language request failed for {repo_name}.")
+                    language_data = {
+                        "repo_name": repo_name,
+                        "languages": None
+                    }
+                    language_results.append(language_data)
+                    continue
 
                 if language_response.status_code == 200:
                     language_dict = language_response.json()
@@ -108,10 +205,30 @@ else:
                         "languages": language_dict
                     }
                     language_results.append(language_data)
+                elif language_response.status_code == 401:
+                    print(f"Warning: Authentication failed while checking languages for {repo_name}.")
+                    language_data = {
+                        "repo_name": repo_name,
+                        "languages": None
+                    }
+                    language_results.append(language_data)
+                elif language_response.status_code == 403:
+                    print(f"Warning: GitHub denied the languages request for {repo_name}.")
+                    language_data = {
+                        "repo_name": repo_name,
+                        "languages": None
+                    }
+                    language_results.append(language_data)
+                else:
+                    language_data = {
+                        "repo_name": repo_name,
+                        "languages": None
+                    }
+                    language_results.append(language_data)
 
         repository_summary = get_repository_summary(processed_repositories)
         language_counts, no_language_count = analyze_languages(processed_repositories)
-        language_repo_counts, no_language_data_count = analyze_detailed_languages(language_results)
+        language_repo_counts, no_language_data_count, unknown_language_count = analyze_detailed_languages(language_results)
 
         original_repositories = repository_summary["original"]
         metadata_analysis = analyze_metadata_coverage(
@@ -138,6 +255,7 @@ else:
         for language, count in language_repo_counts.items():
             print(language, count, sep=": ")
         print("No detected language data:", no_language_data_count)
+        print("Unknown language status:", unknown_language_count)
 
         print("Description coverage:")
         print("With description:", metadata_analysis["with_description"])
