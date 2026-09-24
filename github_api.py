@@ -1,12 +1,16 @@
 import requests
 
+def create_headers(token):
+    request_headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    return request_headers
+
 def fetch_repositories(username, github_token):
     # Get the repo data from github api
     url = f"https://api.github.com/users/{username}/repos"
 
-    request_headers = {
-        "Authorization": f"Bearer {github_token}"
-    }
+    request_headers = create_headers(token=github_token)
 
     page = 1
     repositories = []
@@ -60,9 +64,8 @@ def fetch_repositories(username, github_token):
         
 def fetch_readme_data(username, repositories, github_token):
     readme_results = []
-    request_headers = {
-        "Authorization": f"Bearer {github_token}"
-    }
+    request_headers = create_headers(token=github_token)
+
     for repository in repositories:
         if not repository.get("fork"):
             repo_name = repository.get("name")
@@ -136,9 +139,8 @@ def fetch_readme_data(username, repositories, github_token):
 
 def fetch_language_data(username, repositories, github_token):
     language_results = []
-    request_headers = {
-        "Authorization": f"Bearer {github_token}"
-    }
+    request_headers = create_headers(token=github_token)
+    
     for repository in repositories:
         if not repository.get("fork"):
             repo_name = repository.get("name")
