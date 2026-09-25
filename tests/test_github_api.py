@@ -1,3 +1,5 @@
+import requests
+
 from unittest.mock import Mock, patch
 
 from github_api import fetch_repositories
@@ -39,3 +41,25 @@ def test_fetch_repositories_user_not_found():
         assert result is None
         assert mock_get.call_count == 1
         
+def test_fetch_repositories_timeout():
+    with patch("github_api.requests.get") as mock_get:
+        mock_get.side_effect = requests.exceptions.Timeout
+
+        result = fetch_repositories(username="testuser", github_token="test-token")
+
+        assert result is None
+        assert mock_get.call_count == 1
+
+def test_fetch_repositories_rate_limit():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 403
+        fake_response.headers = {
+            "X-RateLimit-Remaining": "0"
+        }
+        mock_get.return_value = fake_response
+
+        result = fetch_repositories(username="testuser", github_token="test-token")
+
+        assert result is None
+        assert mock_get.call_count == 1
