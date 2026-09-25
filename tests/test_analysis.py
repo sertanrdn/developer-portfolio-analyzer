@@ -166,7 +166,7 @@ def test_analyze_recent_activity():
         }
     ]
 
-    sorted_repositories, recently_active_count = analyze_recent_activity(repositories)
+    sorted_repositories, _ = analyze_recent_activity(repositories)
 
     assert len(sorted_repositories) == 2
     assert sorted_repositories[0]["name"] == "recent-project"
