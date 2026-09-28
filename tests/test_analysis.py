@@ -72,13 +72,20 @@ def test_analyze_languages():
         {"fork": True, "language": "Python"}
     ]
 
-    language_counts, no_language_count = analyze_languages(processed_repositories=repositories)
+    language_counts, no_language_count, primary_language_percentages = (
+        analyze_languages(processed_repositories=repositories)
+    )
 
     assert language_counts == {
         "Python": 2,
         "JavaScript": 1
     }
     assert no_language_count == 1
+
+    assert primary_language_percentages == {
+        "Python": 66.67,
+        "JavaScript": 33.33
+    }
 
 def test_analyze_detailed_languages():
     language_results = [

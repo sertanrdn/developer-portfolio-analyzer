@@ -59,7 +59,15 @@ def analyze_languages(processed_repositories):
                 else:
                     language_counts[language] = 1
 
-    return language_counts, no_language_count
+    repositories_with_language = sum(language_counts.values())
+    primary_language_percentages = {}
+
+    if repositories_with_language > 0:
+        for language, count in language_counts.items():
+            percentage = (count / repositories_with_language) * 100
+            primary_language_percentages[language] = round(percentage, 2)
+
+    return language_counts, no_language_count, primary_language_percentages
 
 def analyze_detailed_languages(language_results):
     language_repo_counts = {}

@@ -47,7 +47,9 @@ else:
         )
 
         repository_summary = get_repository_summary(processed_repositories)
-        language_counts, no_language_count = analyze_languages(processed_repositories)
+        language_counts, no_language_count, primary_language_percentages = (
+            analyze_languages(processed_repositories)
+        )
         language_repo_counts, no_language_data_count, unknown_language_count = analyze_detailed_languages(language_results)
 
         original_repositories = repository_summary["original"]
@@ -70,6 +72,10 @@ else:
         for language, count in language_counts.items():
             print(language, count, sep=": ")
         print("No primary language:", no_language_count)
+
+        print("Primary language distribution:")
+        for language, percentage in primary_language_percentages.items():
+            print(f"{language}: {percentage}%")
 
         print("Languages across original repositories:")
         for language, count in language_repo_counts.items():
