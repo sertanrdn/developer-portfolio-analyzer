@@ -7,10 +7,13 @@ def process_repositories(repositories):
         repo_data = {
             "name": repository.get("name"),
             "description": repository.get("description"),
+            "html_url": repository.get("html_url"),
             "language": repository.get("language"),
             "topics": repository.get("topics", []),
             "fork": repository.get("fork"),
             "archived": repository.get("archived"),
+            "stargazers_count": repository.get("stargazers_count"),
+            "forks_count": repository.get("forks_count"),
             "created_at": repository.get("created_at"),
             "pushed_at": repository.get("pushed_at")
         }
@@ -211,3 +214,48 @@ def analyze_readme_coverage(readme_results):
     }
 
     return readme_data
+
+def build_repository_details(processed_repositories, readme_results, language_results):
+    repository_details = []
+    readme_lookup = {}
+
+    for result in readme_results:
+        repo_name = result.get("repo_name")
+        readme_status = result.get("has_readme")
+
+        readme_lookup[repo_name] = readme_status
+
+    language_lookup = {}
+    for result in language_results:
+        repo_name = result.get("repo_name")
+        language_dict = result.get("languages")
+
+        language_lookup[repo_name] = language_dict
+
+    for repository in processed_repositories:
+        if not repository.get("fork"):
+            repo_name = repository.get("name")
+            readme_status = readme_lookup.get(repo_name)
+            languages = language_lookup.get(repo_name)
+
+            if languages is not None:
+                language_names = list(languages.keys())
+            else:
+                language_names = None
+
+            repository_detail = {
+                "name": repository.get("name"),
+                "description": repository.get("description"),
+                "html_url": repository.get("html_url"),
+                "primary_language": repository.get("language"),
+                "languages": language_names,
+                "topics": repository.get("topics"),
+                "has_readme": readme_status,
+                "stargazers_count": repository.get("stargazers_count"),
+                "forks_count": repository.get("forks_count"),
+                "pushed_at": repository.get("pushed_at")
+            }
+
+            repository_details.append(repository_detail)
+
+    return repository_details

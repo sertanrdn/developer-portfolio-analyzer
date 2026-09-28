@@ -9,7 +9,8 @@ from analysis import (
     analyze_detailed_languages,
     analyze_metadata_coverage,
     analyze_recent_activity,
-    analyze_readme_coverage
+    analyze_readme_coverage,
+    build_repository_details
 ) 
 from github_api import (
     fetch_repositories,
@@ -44,6 +45,12 @@ else:
         )
         language_results = fetch_language_data(
             username=cleaned_username, repositories=processed_repositories, github_token=github_token
+        )
+
+        repository_details = build_repository_details(
+            processed_repositories,
+            readme_results,
+            language_results
         )
 
         repository_summary = get_repository_summary(processed_repositories)

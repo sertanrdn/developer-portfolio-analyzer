@@ -7,7 +7,8 @@ from analysis import (
     analyze_detailed_languages,
     analyze_recent_activity,
     analyze_readme_coverage,
-    analyze_metadata_coverage
+    analyze_metadata_coverage,
+    build_repository_details
 )
 
 def test_process_repositories():
@@ -16,10 +17,13 @@ def test_process_repositories():
             "id": 12345,
             "name": "project-a",
             "description": "My Python project",
+            "html_url": "https://github.com/testuser/project-a",
             "language": "Python",
             "topics": ["python", "api"],
             "fork": False,
             "archived": False,
+            "stargazers_count": 5,
+            "forks_count": 2,
             "created_at": "2026-01-01T10:00:00Z",
             "pushed_at": "2026-09-20T10:00:00Z"
         }
@@ -31,10 +35,13 @@ def test_process_repositories():
         {
             "name": "project-a",
             "description": "My Python project",
+            "html_url": "https://github.com/testuser/project-a",
             "language": "Python",
             "topics": ["python", "api"],
             "fork": False,
             "archived": False,
+            "stargazers_count": 5,
+            "forks_count": 2,
             "created_at": "2026-01-01T10:00:00Z",
             "pushed_at": "2026-09-20T10:00:00Z"
         }
@@ -225,3 +232,67 @@ def test_analyze_readme_coverage():
         "unknown_readme": 1,
         "readme_coverage": 66.67
     }
+
+def test_build_repository_details():
+    processed_repositories = [
+        {
+            "name": "project-a",
+            "description": "My Python project",
+            "html_url": "https://github.com/testuser/project-a",
+            "language": "Python",
+            "topics": ["python", "api"],
+            "fork": False,
+            "stargazers_count": 5,
+            "forks_count": 2,
+            "pushed_at": "2026-09-20T10:00:00Z"
+        },
+        {
+            "name": "project-b",
+            "description": "A forked project",
+            "html_url": "https://github.com/testuser/project-b",
+            "language": "JavaScript",
+            "topics": [],
+            "fork": True,
+            "stargazers_count": 10,
+            "forks_count": 3,
+            "pushed_at": "2026-08-01T10:00:00Z"
+        }
+    ]
+
+    readme_results = [
+        {
+            "repo_name": "project-a",
+            "has_readme": True
+        }
+    ]
+
+    language_results = [
+        {
+            "repo_name": "project-a",
+            "languages": {
+                "Python": 1000,
+                "HTML": 200
+            }
+        }
+    ]
+
+    result = build_repository_details(
+        processed_repositories,
+        readme_results,
+        language_results
+    )
+
+    assert result == [
+        {
+            "name": "project-a",
+            "description": "My Python project",
+            "html_url": "https://github.com/testuser/project-a",
+            "primary_language": "Python",
+            "languages": ["Python", "HTML"],
+            "topics": ["python", "api"],
+            "has_readme": True,
+            "stargazers_count": 5,
+            "forks_count": 2,
+            "pushed_at": "2026-09-20T10:00:00Z"
+        }
+    ]
