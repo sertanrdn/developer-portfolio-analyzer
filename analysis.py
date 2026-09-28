@@ -7,10 +7,13 @@ def process_repositories(repositories):
         repo_data = {
             "name": repository.get("name"),
             "description": repository.get("description"),
+            "html_url": repository.get("html_url"),
             "language": repository.get("language"),
             "topics": repository.get("topics", []),
             "fork": repository.get("fork"),
             "archived": repository.get("archived"),
+            "stargazers_count": repository.get("stargazers_count"),
+            "forks_count": repository.get("forks_count"),
             "created_at": repository.get("created_at"),
             "pushed_at": repository.get("pushed_at")
         }
@@ -59,7 +62,15 @@ def analyze_languages(processed_repositories):
                 else:
                     language_counts[language] = 1
 
-    return language_counts, no_language_count
+    repositories_with_language = sum(language_counts.values())
+    primary_language_percentages = {}
+
+    if repositories_with_language > 0:
+        for language, count in language_counts.items():
+            percentage = (count / repositories_with_language) * 100
+            primary_language_percentages[language] = round(percentage, 2)
+
+    return language_counts, no_language_count, primary_language_percentages
 
 def analyze_detailed_languages(language_results):
     language_repo_counts = {}
@@ -122,7 +133,7 @@ def analyze_metadata_coverage(processed_repositories, original_repositories):
 
     return metadata_analysis
 
-def analyze_recent_activity(processed_repositories):
+def analyze_recent_activity(processed_repositories, current_time=None):
     # Calculate recent activity
     recent_repositories = []
 
@@ -145,17 +156,34 @@ def analyze_recent_activity(processed_repositories):
         reverse=True
     )
 
+    if current_time is None:
+        current_time = datetime.now(timezone.utc)
+
+    freshness_buckets = {
+        "last_90_days": 0,
+        "91_to_365_days": 0,
+        "1_to_2_years": 0,
+        "over_2_years": 0
+    }
+
     # Get the activity within last 90 days
     recently_active_count = 0
-    current_time = datetime.now(timezone.utc)
 
     for repository in sorted_repositories:
         time_since_push = current_time - repository["pushed_at"]
+        days = time_since_push.days
 
-        if time_since_push.days <= 90:
+        if days <= 90:
+            freshness_buckets["last_90_days"] += 1
             recently_active_count += 1
+        elif days <= 365:
+            freshness_buckets["91_to_365_days"] += 1
+        elif days <= 730:  # 2 years
+            freshness_buckets["1_to_2_years"] += 1
+        else:
+            freshness_buckets["over_2_years"] += 1
 
-    return sorted_repositories, recently_active_count
+    return sorted_repositories, recently_active_count, freshness_buckets
 
 def analyze_readme_coverage(readme_results):
     with_readme = 0
@@ -186,3 +214,48 @@ def analyze_readme_coverage(readme_results):
     }
 
     return readme_data
+
+def build_repository_details(processed_repositories, readme_results, language_results):
+    repository_details = []
+    readme_lookup = {}
+
+    for result in readme_results:
+        repo_name = result.get("repo_name")
+        readme_status = result.get("has_readme")
+
+        readme_lookup[repo_name] = readme_status
+
+    language_lookup = {}
+    for result in language_results:
+        repo_name = result.get("repo_name")
+        language_dict = result.get("languages")
+
+        language_lookup[repo_name] = language_dict
+
+    for repository in processed_repositories:
+        if not repository.get("fork"):
+            repo_name = repository.get("name")
+            readme_status = readme_lookup.get(repo_name)
+            languages = language_lookup.get(repo_name)
+
+            if languages is not None:
+                language_names = list(languages.keys())
+            else:
+                language_names = None
+
+            repository_detail = {
+                "name": repository.get("name"),
+                "description": repository.get("description"),
+                "html_url": repository.get("html_url"),
+                "primary_language": repository.get("language"),
+                "languages": language_names,
+                "topics": repository.get("topics"),
+                "has_readme": readme_status,
+                "stargazers_count": repository.get("stargazers_count"),
+                "forks_count": repository.get("forks_count"),
+                "pushed_at": repository.get("pushed_at")
+            }
+
+            repository_details.append(repository_detail)
+
+    return repository_details

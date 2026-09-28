@@ -9,7 +9,8 @@ from analysis import (
     analyze_detailed_languages,
     analyze_metadata_coverage,
     analyze_recent_activity,
-    analyze_readme_coverage
+    analyze_readme_coverage,
+    build_repository_details
 ) 
 from github_api import (
     fetch_repositories,
@@ -46,8 +47,16 @@ else:
             username=cleaned_username, repositories=processed_repositories, github_token=github_token
         )
 
+        repository_details = build_repository_details(
+            processed_repositories,
+            readme_results,
+            language_results
+        )
+
         repository_summary = get_repository_summary(processed_repositories)
-        language_counts, no_language_count = analyze_languages(processed_repositories)
+        language_counts, no_language_count, primary_language_percentages = (
+            analyze_languages(processed_repositories)
+        )
         language_repo_counts, no_language_data_count, unknown_language_count = analyze_detailed_languages(language_results)
 
         original_repositories = repository_summary["original"]
@@ -55,8 +64,8 @@ else:
             processed_repositories,
             original_repositories
         )
-        sorted_repositories, recently_active_count = analyze_recent_activity(
-            processed_repositories
+        sorted_repositories, recently_active_count, freshness_buckets = (
+            analyze_recent_activity(processed_repositories)
         )
 
         readme_analysis = analyze_readme_coverage(readme_results)
@@ -70,6 +79,10 @@ else:
         for language, count in language_counts.items():
             print(language, count, sep=": ")
         print("No primary language:", no_language_count)
+
+        print("Primary language distribution:")
+        for language, percentage in primary_language_percentages.items():
+            print(f"{language}: {percentage}%")
 
         print("Languages across original repositories:")
         for language, count in language_repo_counts.items():
@@ -88,6 +101,12 @@ else:
         print(f"Coverage: {metadata_analysis['topics_coverage']}%")
 
         print(f"Recently active original repositories (last 90 days): {recently_active_count} of {original_repositories}")
+        print("Repository freshness:")
+        print("Last 90 days:", freshness_buckets["last_90_days"])
+        print("91–365 days:", freshness_buckets["91_to_365_days"])
+        print("1–2 years:", freshness_buckets["1_to_2_years"])
+        print("Over 2 years:", freshness_buckets["over_2_years"])
+
         print("Recently updated repositories:")
         for repository in sorted_repositories[:3]:
             repo_name = repository.get("name")

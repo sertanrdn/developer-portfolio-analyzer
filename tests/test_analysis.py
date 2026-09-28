@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from analysis import (
     process_repositories,
     get_repository_summary,
@@ -5,7 +7,8 @@ from analysis import (
     analyze_detailed_languages,
     analyze_recent_activity,
     analyze_readme_coverage,
-    analyze_metadata_coverage
+    analyze_metadata_coverage,
+    build_repository_details
 )
 
 def test_process_repositories():
@@ -14,10 +17,13 @@ def test_process_repositories():
             "id": 12345,
             "name": "project-a",
             "description": "My Python project",
+            "html_url": "https://github.com/testuser/project-a",
             "language": "Python",
             "topics": ["python", "api"],
             "fork": False,
             "archived": False,
+            "stargazers_count": 5,
+            "forks_count": 2,
             "created_at": "2026-01-01T10:00:00Z",
             "pushed_at": "2026-09-20T10:00:00Z"
         }
@@ -29,10 +35,13 @@ def test_process_repositories():
         {
             "name": "project-a",
             "description": "My Python project",
+            "html_url": "https://github.com/testuser/project-a",
             "language": "Python",
             "topics": ["python", "api"],
             "fork": False,
             "archived": False,
+            "stargazers_count": 5,
+            "forks_count": 2,
             "created_at": "2026-01-01T10:00:00Z",
             "pushed_at": "2026-09-20T10:00:00Z"
         }
@@ -70,13 +79,20 @@ def test_analyze_languages():
         {"fork": True, "language": "Python"}
     ]
 
-    language_counts, no_language_count = analyze_languages(processed_repositories=repositories)
+    language_counts, no_language_count, primary_language_percentages = (
+        analyze_languages(processed_repositories=repositories)
+    )
 
     assert language_counts == {
         "Python": 2,
         "JavaScript": 1
     }
     assert no_language_count == 1
+
+    assert primary_language_percentages == {
+        "Python": 66.67,
+        "JavaScript": 33.33
+    }
 
 def test_analyze_detailed_languages():
     language_results = [
@@ -155,9 +171,19 @@ def test_analyze_recent_activity():
             "pushed_at": "2026-09-20T10:00:00+00:00"
         },
         {
-            "name": "older-project",
+            "name": "months-old-project",
             "fork": False,
-            "pushed_at": "2025-01-01T10:00:00+00:00"
+            "pushed_at": "2026-03-01T10:00:00+00:00"
+        },
+        {
+            "name": "one-year-old-project",
+            "fork": False,
+            "pushed_at": "2025-03-01T10:00:00+00:00"
+        },
+        {
+            "name": "very-old-project",
+            "fork": False,
+            "pushed_at": "2023-01-01T10:00:00+00:00"
         },
         {
             "name": "forked-project",
@@ -165,12 +191,30 @@ def test_analyze_recent_activity():
             "pushed_at": "2026-09-24T10:00:00+00:00"
         }
     ]
+    current_time = datetime(
+        2026, 9, 28, 12, 0, 0,
+        tzinfo=timezone.utc
+    )
 
-    sorted_repositories, _ = analyze_recent_activity(repositories)
+    sorted_repositories, recently_active_count, freshness_buckets = (
+        analyze_recent_activity(repositories, current_time=current_time)
+    )
 
-    assert len(sorted_repositories) == 2
+    assert len(sorted_repositories) == 4
+    
     assert sorted_repositories[0]["name"] == "recent-project"
-    assert sorted_repositories[1]["name"] == "older-project"
+    assert sorted_repositories[1]["name"] == "months-old-project"
+    assert sorted_repositories[2]["name"] == "one-year-old-project"
+    assert sorted_repositories[3]["name"] == "very-old-project"
+
+    assert recently_active_count == 1
+
+    assert freshness_buckets == {
+        "last_90_days": 1,
+        "91_to_365_days": 1,
+        "1_to_2_years": 1,
+        "over_2_years": 1
+    }
 
 def test_analyze_readme_coverage():
     readme_results = [
@@ -188,3 +232,67 @@ def test_analyze_readme_coverage():
         "unknown_readme": 1,
         "readme_coverage": 66.67
     }
+
+def test_build_repository_details():
+    processed_repositories = [
+        {
+            "name": "project-a",
+            "description": "My Python project",
+            "html_url": "https://github.com/testuser/project-a",
+            "language": "Python",
+            "topics": ["python", "api"],
+            "fork": False,
+            "stargazers_count": 5,
+            "forks_count": 2,
+            "pushed_at": "2026-09-20T10:00:00Z"
+        },
+        {
+            "name": "project-b",
+            "description": "A forked project",
+            "html_url": "https://github.com/testuser/project-b",
+            "language": "JavaScript",
+            "topics": [],
+            "fork": True,
+            "stargazers_count": 10,
+            "forks_count": 3,
+            "pushed_at": "2026-08-01T10:00:00Z"
+        }
+    ]
+
+    readme_results = [
+        {
+            "repo_name": "project-a",
+            "has_readme": True
+        }
+    ]
+
+    language_results = [
+        {
+            "repo_name": "project-a",
+            "languages": {
+                "Python": 1000,
+                "HTML": 200
+            }
+        }
+    ]
+
+    result = build_repository_details(
+        processed_repositories,
+        readme_results,
+        language_results
+    )
+
+    assert result == [
+        {
+            "name": "project-a",
+            "description": "My Python project",
+            "html_url": "https://github.com/testuser/project-a",
+            "primary_language": "Python",
+            "languages": ["Python", "HTML"],
+            "topics": ["python", "api"],
+            "has_readme": True,
+            "stargazers_count": 5,
+            "forks_count": 2,
+            "pushed_at": "2026-09-20T10:00:00Z"
+        }
+    ]
