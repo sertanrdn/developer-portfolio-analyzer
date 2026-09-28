@@ -122,7 +122,7 @@ def analyze_metadata_coverage(processed_repositories, original_repositories):
 
     return metadata_analysis
 
-def analyze_recent_activity(processed_repositories):
+def analyze_recent_activity(processed_repositories, current_time=None):
     # Calculate recent activity
     recent_repositories = []
 
@@ -145,17 +145,34 @@ def analyze_recent_activity(processed_repositories):
         reverse=True
     )
 
+    if current_time is None:
+        current_time = datetime.now(timezone.utc)
+
+    freshness_buckets = {
+        "last_90_days": 0,
+        "91_to_365_days": 0,
+        "1_to_2_years": 0,
+        "over_2_years": 0
+    }
+
     # Get the activity within last 90 days
     recently_active_count = 0
-    current_time = datetime.now(timezone.utc)
 
     for repository in sorted_repositories:
         time_since_push = current_time - repository["pushed_at"]
+        days = time_since_push.days
 
-        if time_since_push.days <= 90:
+        if days <= 90:
+            freshness_buckets["last_90_days"] += 1
             recently_active_count += 1
+        elif days <= 365:
+            freshness_buckets["91_to_365_days"] += 1
+        elif days <= 730:  # 2 years
+            freshness_buckets["1_to_2_years"] += 1
+        else:
+            freshness_buckets["over_2_years"] += 1
 
-    return sorted_repositories, recently_active_count
+    return sorted_repositories, recently_active_count, freshness_buckets
 
 def analyze_readme_coverage(readme_results):
     with_readme = 0

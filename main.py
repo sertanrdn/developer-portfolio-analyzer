@@ -55,8 +55,8 @@ else:
             processed_repositories,
             original_repositories
         )
-        sorted_repositories, recently_active_count = analyze_recent_activity(
-            processed_repositories
+        sorted_repositories, recently_active_count, freshness_buckets = (
+            analyze_recent_activity(processed_repositories)
         )
 
         readme_analysis = analyze_readme_coverage(readme_results)
@@ -88,6 +88,12 @@ else:
         print(f"Coverage: {metadata_analysis['topics_coverage']}%")
 
         print(f"Recently active original repositories (last 90 days): {recently_active_count} of {original_repositories}")
+        print("Repository freshness:")
+        print("Last 90 days:", freshness_buckets["last_90_days"])
+        print("91–365 days:", freshness_buckets["91_to_365_days"])
+        print("1–2 years:", freshness_buckets["1_to_2_years"])
+        print("Over 2 years:", freshness_buckets["over_2_years"])
+
         print("Recently updated repositories:")
         for repository in sorted_repositories[:3]:
             repo_name = repository.get("name")

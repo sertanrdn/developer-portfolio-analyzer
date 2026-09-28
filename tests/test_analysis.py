@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from analysis import (
     process_repositories,
     get_repository_summary,
@@ -155,9 +157,19 @@ def test_analyze_recent_activity():
             "pushed_at": "2026-09-20T10:00:00+00:00"
         },
         {
-            "name": "older-project",
+            "name": "months-old-project",
             "fork": False,
-            "pushed_at": "2025-01-01T10:00:00+00:00"
+            "pushed_at": "2026-03-01T10:00:00+00:00"
+        },
+        {
+            "name": "one-year-old-project",
+            "fork": False,
+            "pushed_at": "2025-03-01T10:00:00+00:00"
+        },
+        {
+            "name": "very-old-project",
+            "fork": False,
+            "pushed_at": "2023-01-01T10:00:00+00:00"
         },
         {
             "name": "forked-project",
@@ -165,12 +177,30 @@ def test_analyze_recent_activity():
             "pushed_at": "2026-09-24T10:00:00+00:00"
         }
     ]
+    current_time = datetime(
+        2026, 9, 28, 12, 0, 0,
+        tzinfo=timezone.utc
+    )
 
-    sorted_repositories, _ = analyze_recent_activity(repositories)
+    sorted_repositories, recently_active_count, freshness_buckets = (
+        analyze_recent_activity(repositories, current_time=current_time)
+    )
 
-    assert len(sorted_repositories) == 2
+    assert len(sorted_repositories) == 4
+    
     assert sorted_repositories[0]["name"] == "recent-project"
-    assert sorted_repositories[1]["name"] == "older-project"
+    assert sorted_repositories[1]["name"] == "months-old-project"
+    assert sorted_repositories[2]["name"] == "one-year-old-project"
+    assert sorted_repositories[3]["name"] == "very-old-project"
+
+    assert recently_active_count == 1
+
+    assert freshness_buckets == {
+        "last_90_days": 1,
+        "91_to_365_days": 1,
+        "1_to_2_years": 1,
+        "over_2_years": 1
+    }
 
 def test_analyze_readme_coverage():
     readme_results = [
