@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from analysis import (
+    process_user_profile,
     process_repositories,
     get_repository_summary,
     analyze_languages, 
@@ -10,6 +11,42 @@ from analysis import (
     analyze_metadata_coverage,
     build_repository_details
 )
+
+def test_process_user_profile():
+    user_profile = {
+        "id": 12345,
+        "login": "testuser",
+        "name": "Test User",
+        "avatar_url": "https://example.com/avatar.png",
+        "html_url": "https://github.com/testuser",
+        "bio": "Python developer",
+        "company": "Test Company",
+        "blog": "https://example.com",
+        "location": "Amsterdam",
+        "public_repos": 10,
+        "followers": 5,
+        "following": 3,
+        "created_at": "2024-01-01T10:00:00Z",
+        "public_gists": 2,
+        "type": "User"
+    }
+
+    result = process_user_profile(user_profile)
+
+    assert result == {
+        "login": "testuser",
+        "name": "Test User",
+        "avatar_url": "https://example.com/avatar.png",
+        "html_url": "https://github.com/testuser",
+        "bio": "Python developer",
+        "company": "Test Company",
+        "blog": "https://example.com",
+        "location": "Amsterdam",
+        "public_repos": 10,
+        "followers": 5,
+        "following": 3,
+        "created_at": "2024-01-01T10:00:00Z"
+    }
 
 def test_process_repositories():
     repositories = [

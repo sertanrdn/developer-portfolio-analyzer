@@ -1,5 +1,23 @@
 from datetime import datetime, timezone
 
+def process_user_profile(user_profile):
+    profile_data = {
+        "login": user_profile.get("login"),
+        "name": user_profile.get("name"),
+        "avatar_url": user_profile.get("avatar_url"),
+        "html_url": user_profile.get("html_url"),
+        "bio": user_profile.get("bio"),
+        "company": user_profile.get("company"),
+        "blog": user_profile.get("blog"),
+        "location": user_profile.get("location"),
+        "public_repos": user_profile.get("public_repos"),
+        "followers": user_profile.get("followers"),
+        "following": user_profile.get("following"),
+        "created_at": user_profile.get("created_at")
+    }
+
+    return profile_data
+
 def process_repositories(repositories):
     processed_repositories = []
 

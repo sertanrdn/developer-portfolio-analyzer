@@ -6,6 +6,46 @@ def create_headers(token):
     }
     return request_headers
 
+def fetch_user_profile(username, github_token):
+    # Get the profile data from github api
+    url = f"https://api.github.com/users/{username}"
+
+    request_headers = create_headers(token=github_token)
+
+    try:
+        response = requests.get(url, headers=request_headers, timeout=10)
+    except requests.exceptions.Timeout:
+        print("Error: GitHub request timed out.")
+        return None
+    except requests.exceptions.ConnectionError:
+        print("Error: Could not connect to GitHub.")
+        return None
+    except requests.exceptions.RequestException:
+        print("Error: GitHub request failed.")
+        return None
+
+    if response.status_code == 200:
+        return response.json()
+    
+    elif response.status_code == 404:
+        print("Error: GitHub user not found.")
+        return None
+    elif response.status_code == 401:
+        print("Error: Authentication failed. Please check your GitHub token or credentials.")
+        return None
+    elif response.status_code == 403:
+        remaining_requests = response.headers.get("X-RateLimit-Remaining")
+
+        if remaining_requests == "0":
+            print("Rate-limit error: You have hit your GitHub API request limit.")
+        else:
+            print("Error: GitHub denied the request.")
+
+        return None
+    else:
+        print(f"Error: GitHub request failed with status code {response.status_code}.")
+        return None
+
 def fetch_repositories(username, github_token):
     # Get the repo data from github api
     url = f"https://api.github.com/users/{username}/repos"

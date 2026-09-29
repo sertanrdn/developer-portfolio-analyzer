@@ -3,8 +3,52 @@ import requests
 from unittest.mock import Mock, patch
 
 from github_api import (
-    fetch_repositories, fetch_readme_data, fetch_language_data
+    fetch_user_profile, 
+    fetch_repositories, 
+    fetch_readme_data, 
+    fetch_language_data
 )
+
+# Tests for user profile fetching
+def test_fetch_user_profile_success():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 200
+        fake_response.json.return_value = {
+            "login": "testuser",
+            "name": "Test User",
+            "public_repos": 10,
+            "followers": 5
+        }
+        mock_get.return_value = fake_response
+
+        result = fetch_user_profile(
+            username="testuser",
+            github_token="test-token"
+        )
+
+        assert result == {
+            "login": "testuser",
+            "name": "Test User",
+            "public_repos": 10,
+            "followers": 5
+        }
+        assert mock_get.call_count == 1
+
+
+def test_fetch_user_profile_user_not_found():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 404
+        mock_get.return_value = fake_response
+
+        result = fetch_user_profile(
+            username="testuser",
+            github_token="test-token"
+        )
+
+        assert result is None
+        assert mock_get.call_count == 1
 
 # Tests for repository fetching
 def test_fetch_repositories_success():
