@@ -13,6 +13,7 @@ from analysis import (
     build_repository_details
 ) 
 from github_api import (
+    fetch_user_profile,
     fetch_repositories,
     fetch_readme_data,
     fetch_language_data
@@ -33,6 +34,10 @@ if not cleaned_username:
     print("Error: GitHub username is required.")
 else:
     print("GitHub username:", cleaned_username)
+
+    user_profile = fetch_user_profile(
+        username=cleaned_username, github_token=github_token
+    )
 
     repositories = fetch_repositories(
         username=cleaned_username, github_token=github_token
