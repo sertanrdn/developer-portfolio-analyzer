@@ -4,8 +4,12 @@ import streamlit as st
 from dotenv import load_dotenv
 from datetime import datetime
 
-from github_api import fetch_user_profile
-from analysis import process_user_profile
+from github_api import fetch_user_profile, fetch_repositories
+from analysis import (
+    process_user_profile, 
+    process_repositories, 
+    get_repository_summary
+)
 
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")
@@ -27,6 +31,7 @@ if analyze_button:
         )
 
         if user_profile is not None:
+            # Building the profile information part
             processed_user_profile = process_user_profile(
                 user_profile=user_profile
             )
@@ -68,6 +73,26 @@ if analyze_button:
                 st.metric("Following", processed_user_profile["following"])
             with member_column:
                 st.metric("Member Since", member_since.year)
-    
+
+            # Building the repo overview 
+            repositories = fetch_repositories(
+                username=cleaned_username,
+                github_token=github_token
+            )
+
+            if repositories is not None:
+                processed_repos = process_repositories(repositories=repositories)
+                repository_summary = get_repository_summary(processed_repositories=processed_repos)
+
+                st.subheader("Repository Overview")
+                original_repos, forked_repos, archived_repos = st.columns(3)
+
+                with original_repos:
+                    st.metric("Original repositories", repository_summary["original"])
+                with forked_repos:
+                    st.metric("Forked repositories", repository_summary["forked"])
+                with archived_repos:
+                    st.metric("Archived repositories", repository_summary["archived"])                
+
         else:
             st.error("Could not load this GitHub profile.")
