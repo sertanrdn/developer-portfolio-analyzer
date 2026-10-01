@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+import altair as alt
 
 from dotenv import load_dotenv
 from datetime import datetime
@@ -8,7 +9,8 @@ from github_api import fetch_user_profile, fetch_repositories
 from analysis import (
     process_user_profile, 
     process_repositories, 
-    get_repository_summary
+    get_repository_summary,
+    analyze_languages
 )
 
 load_dotenv()
@@ -93,6 +95,35 @@ if analyze_button:
                     st.metric("Forked repositories", repository_summary["forked"])
                 with archived_repos:
                     st.metric("Archived repositories", repository_summary["archived"])                
+
+                # Building the donut chart for languages
+                language_counts, no_language_count, primary_language_percentages = (
+                    analyze_languages(processed_repositories=processed_repos)
+                )
+
+                st.subheader("Languages")
+                language_chart_data = []
+                for language, percentage in primary_language_percentages.items():
+                    chart_item = {
+                        "language": language,
+                        "percentage": percentage
+                    }
+                    
+                    language_chart_data.append(chart_item)
+                
+                language_chart = (
+                    alt.Chart(alt.Data(values=language_chart_data))
+                    .mark_arc(innerRadius=70)
+                    .encode(
+                        theta=alt.Theta("percentage:Q"),
+                        color=alt.Color("language:N"),
+                        tooltip=[
+                            alt.Tooltip("language:N", title="Language"),
+                            alt.Tooltip("percentage:Q", title="Share", format=".2f")
+                        ]
+                    )
+                )
+                st.altair_chart(language_chart)
 
         else:
             st.error("Could not load this GitHub profile.")
