@@ -2,6 +2,7 @@ import os
 import streamlit as st
 
 from dotenv import load_dotenv
+from datetime import datetime
 
 from github_api import fetch_user_profile
 from analysis import process_user_profile
@@ -35,12 +36,14 @@ if analyze_button:
             )
             bio = processed_user_profile.get("bio") or "No bio provided."
 
+            created_at = processed_user_profile.get("created_at")
+            member_since = datetime.fromisoformat(created_at)
+
             avatar_column, profile_column = st.columns([1, 3])
 
             with avatar_column:
                 st.image(processed_user_profile["avatar_url"])
             with profile_column:
-                st.write(processed_user_profile["name"])
                 st.subheader(display_name)
                 st.subheader(f"@{processed_user_profile['login']}")
                 st.write(bio)
@@ -54,5 +57,17 @@ if analyze_button:
                 st.link_button(
                     "View GitHub profile", processed_user_profile["html_url"]
                 )
+
+            repos_column, followers_column, following_column, member_column = st.columns(4)
+
+            with repos_column:
+                st.metric("Public repositories", processed_user_profile["public_repos"])
+            with followers_column:
+                st.metric("Followers", processed_user_profile["followers"])
+            with following_column:
+                st.metric("Following", processed_user_profile["following"])
+            with member_column:
+                st.metric("Member Since", member_since.year)
+    
         else:
             st.error("Could not load this GitHub profile.")
