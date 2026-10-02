@@ -5,12 +5,17 @@ import altair as alt
 from dotenv import load_dotenv
 from datetime import datetime
 
-from github_api import fetch_user_profile, fetch_repositories
+from github_api import (
+    fetch_user_profile, 
+    fetch_repositories,
+    fetch_language_data
+)
 from analysis import (
     process_user_profile, 
     process_repositories, 
     get_repository_summary,
-    analyze_languages
+    analyze_languages,
+    analyze_detailed_languages
 )
 
 load_dotenv()
@@ -124,6 +129,34 @@ if analyze_button:
                     )
                 )
                 st.altair_chart(language_chart)
+
+                # Building the languages bar
+                language_results = fetch_language_data(
+                    username=cleaned_username, 
+                    repositories=processed_repos,
+                    github_token=github_token
+                )
+                language_repo_counts, no_language_data_count, unknown_language_count = (
+                    analyze_detailed_languages(language_results)
+                )
+
+                language_bar_data = []
+                for language, repo_count in language_repo_counts.items():
+                    bar_item = {
+                        "language": language,
+                        "repositories": repo_count
+                    }
+                    language_bar_data.append(bar_item)
+                
+                language_bar_chart = (
+                    alt.Chart(alt.Data(values=language_bar_data))
+                    .mark_bar()
+                    .encode(
+                        x=alt.X("repositories:Q"),
+                        y=alt.Y("language:N")
+                    )
+                )
+                st.altair_chart(language_bar_chart)
 
         else:
             st.error("Could not load this GitHub profile.")
