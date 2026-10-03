@@ -8,14 +8,17 @@ from datetime import datetime
 from github_api import (
     fetch_user_profile, 
     fetch_repositories,
-    fetch_language_data
+    fetch_language_data,
+    fetch_readme_data
 )
 from analysis import (
     process_user_profile, 
     process_repositories, 
     get_repository_summary,
     analyze_languages,
-    analyze_detailed_languages
+    analyze_detailed_languages,
+    analyze_metadata_coverage,
+    analyze_readme_coverage
 )
 
 load_dotenv()
@@ -169,5 +172,46 @@ if analyze_button:
                     st.write("Languages across projects")
                     st.altair_chart(language_bar_chart)
 
+                # Building the Metadata/Readme Coverage section
+                metadata_analysis = analyze_metadata_coverage(
+                    processed_repositories=processed_repos,
+                    original_repositories=repository_summary["original"]
+                )
+
+                readme_results = fetch_readme_data(
+                    username=cleaned_username,
+                    repositories=processed_repos,
+                    github_token=github_token
+                )
+                readme_analysis = analyze_readme_coverage(readme_results=readme_results)
+                st.subheader("Portfolio Metadata")
+
+                readme_coverage, description_coverage, topics_coverage = st.columns(3)
+
+                with readme_coverage:
+                    st.metric(
+                        "README coverage", 
+                        f"{readme_analysis['readme_coverage']}%"
+                    )
+                    st.caption(
+                        f"{readme_analysis['with_readme']} of {repository_summary['original']} repositories"
+                    )
+                with description_coverage:
+                    st.metric(
+                        "Description coverage",
+                        f"{metadata_analysis['description_coverage']}%"
+                    )
+                    st.caption(
+                        f"{metadata_analysis['with_description']} of {repository_summary['original']} repositories"
+                    )
+                with topics_coverage:
+                    st.metric(
+                        "Topics coverage", 
+                        f"{metadata_analysis['topics_coverage']}%"
+                    )
+                    st.caption(
+                        f"{metadata_analysis['with_topics']} of {repository_summary['original']} repositories"
+                    )
+                
         else:
             st.error("Could not load this GitHub profile.")
