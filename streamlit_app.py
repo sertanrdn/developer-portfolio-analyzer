@@ -152,8 +152,12 @@ if analyze_button:
                     alt.Chart(alt.Data(values=language_bar_data))
                     .mark_bar()
                     .encode(
-                        x=alt.X("repositories:Q"),
-                        y=alt.Y("language:N")
+                        x=alt.X("repositories:Q", axis=alt.Axis(tickMinStep=1)),
+                        y=alt.Y("language:N", sort="-x"),
+                        tooltip=[
+                            alt.Tooltip("language:N", title="Language"),
+                            alt.Tooltip("repositories:Q", title="Repositories")
+                        ]
                     )
                 )
                 st.altair_chart(language_bar_chart)
