@@ -128,7 +128,6 @@ if analyze_button:
                         ]
                     )
                 )
-                st.altair_chart(language_chart)
 
                 # Building the languages bar
                 language_results = fetch_language_data(
@@ -160,7 +159,15 @@ if analyze_button:
                         ]
                     )
                 )
-                st.altair_chart(language_bar_chart)
+                primary_language_column, detailed_language_column = st.columns(2)
+
+                with primary_language_column:
+                    st.write("Primary language distribution")
+                    st.altair_chart(language_chart)
+
+                with detailed_language_column:
+                    st.write("Languages across projects")
+                    st.altair_chart(language_bar_chart)
 
         else:
             st.error("Could not load this GitHub profile.")
