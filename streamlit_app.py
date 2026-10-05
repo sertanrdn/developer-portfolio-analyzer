@@ -19,7 +19,8 @@ from analysis import (
     analyze_detailed_languages,
     analyze_metadata_coverage,
     analyze_readme_coverage,
-    analyze_recent_activity
+    analyze_recent_activity,
+    build_repository_details
 )
 
 load_dotenv()
@@ -250,6 +251,51 @@ if analyze_button:
                         f"{repository['name']} — "
                         f"{repository['pushed_at'].strftime('%Y-%m-%d')}"
                     )
+
+                # Building the Repositories section
+                repository_details = build_repository_details(
+                    processed_repositories=processed_repos,
+                    readme_results=readme_results,
+                    language_results=language_results
+                )
+
+                st.subheader("Repositories")
+                for repository in repository_details:
+                    with st.container(border=True):
+                        st.write(repository["name"])
+                        st.write(repository["description"] or "No description provided.")
+
+                        if repository["languages"]:
+                            languages = ", ".join(repository["languages"])
+                            st.write("Languages:", languages)
+                        else:
+                            st.write("Languages unavailable")
+
+                        if repository["topics"]:
+                            topics = ", ".join(repository["topics"])
+                            st.write("Topics:", topics)
+                        else:
+                            st.write("No topics")
+
+                        if repository["has_readme"] is True:
+                            st.write("README: Yes")
+                        elif repository["has_readme"] is False:
+                            st.write("README: No")
+                        else:
+                            st.write("README: Unknown")
+
+                        st.write("Stars:", repository["stargazers_count"])
+                        st.write("Forks:", repository["forks_count"])
+
+                        if repository["pushed_at"]:
+                            clean_timestamp = repository["pushed_at"].replace("Z", "+00:00")
+                            dt_object = datetime.fromisoformat(clean_timestamp)
+                            formatted_date = dt_object.strftime("%Y-%m-%d")
+                            st.write(f"Updated: {formatted_date}")
+                        else:
+                            st.write("Updated date unavailable")
+
+                        st.link_button("View on GitHub", repository['html_url'])
                 
         else:
             st.error("Could not load this GitHub profile.")
