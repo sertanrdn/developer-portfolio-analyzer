@@ -27,23 +27,56 @@ from ui.languages import render_languages
 from ui.metadata import render_metadata
 from ui.activity import render_activity
 from ui.repositories import render_repositories
+from ui.styles import apply_global_styles
+
+st.set_page_config(
+    page_title="Developer Portfolio Analyzer",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+apply_global_styles()
 
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")
 
-st.title("Developer Portfolio Analyzer")
-st.write("Analyze a developer's public GitHub portfolio.")
+st.markdown(
+    """
+    <div class="app-header">
+        <h1>Developer Portfolio Analyzer</h1>
+        <p class="app-description">
+            Understand what a developer's public GitHub portfolio communicates
+            through repositories, languages, activity, and project metadata.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-username = st.text_input("GitHub username")
+_, search_column, _ = st.columns([1.5, 5, 1.5])
+
+with search_column:
+    input_column, button_column = st.columns([4, 1])
+
+    with input_column:
+        username = st.text_input(
+            "GitHub username",
+            placeholder="Enter a GitHub username",
+            label_visibility="collapsed"
+        )
+
+    with button_column:
+        analyze_button = st.button(
+            "Analyze",
+            use_container_width=True,
+        )
 
 if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = None
 
 if "repository_page" not in st.session_state:
     st.session_state.repository_page = 1
-
-analyze_button = st.button("Analyze")
-
 
 # Fetch and analyze data only when the Analyze button is clicked
 if analyze_button:
