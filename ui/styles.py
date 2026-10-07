@@ -141,6 +141,61 @@ def apply_global_styles():
             line-height: 1.2;
         }
 
+        /* Chart cards */
+        .chart-header {
+            margin-bottom: 0.75rem;
+        }
+
+        .chart-header h3 {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .chart-header p {
+            margin: 0.3rem 0 0 0;
+            color: #64748b;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Language legend */
+        .language-legend-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .language-legend-row:last-child {
+            border-bottom: none;
+        }
+
+        .language-legend-name {
+            color: #475569;
+            font-size: 0.875rem;
+        }
+
+        .language-legend-percentage {
+            color: #111827;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .language-legend-language {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .language-color-dot {
+            width: 0.65rem;
+            height: 0.65rem;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
         /* Link buttons */
         .stLinkButton a {
             border: 1px solid #c7d2fe;
