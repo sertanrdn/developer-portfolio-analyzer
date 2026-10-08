@@ -235,6 +235,64 @@ def apply_global_styles():
             font-size: 0.8rem;
         }
 
+        /* Repository activity */
+
+        .activity-card {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .activity-card-label {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .activity-card-value {
+            color: #111827;
+            font-size: 1.75rem;
+            font-weight: 500;
+            line-height: 1.3;
+        }
+
+        .activity-recent-header {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .activity-recent-header h3 {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .activity-repository {
+            padding: 0.75rem 0;
+        }
+
+        .activity-repository-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .activity-repository-name {
+            color: #111827;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .activity-repository-date {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        .activity-divider {
+            height: 1px;
+            background-color: #e2e8f0;
+        }
+
         /* Link buttons */
         .stLinkButton a {
             border: 1px solid #c7d2fe;

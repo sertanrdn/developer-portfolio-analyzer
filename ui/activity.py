@@ -1,44 +1,82 @@
 import streamlit as st
 
+
 def render_activity(freshness_buckets, sorted_repositories):
-    # Repository activity
-    st.subheader("Repository Activity")
+    st.markdown(
+        """
+        <div class="section-header">
+            <h2>Repository Activity</h2>
+            <p>
+                How recently your original repositories have been updated.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    (
-        activity_column_1,
-        activity_column_2,
-        activity_column_3,
-        activity_column_4
-    ) = st.columns(4)
+    activity_column_1, activity_column_2, activity_column_3, activity_column_4 = st.columns(4)
 
-    with activity_column_1:
-        st.metric(
-            "Last 90 days",
-            freshness_buckets["last_90_days"]
-        )
+    activity_data = [
+        ("Last 90 days", freshness_buckets["last_90_days"]),
+        ("91–365 days", freshness_buckets["91_to_365_days"]),
+        ("1–2 years", freshness_buckets["1_to_2_years"]),
+        ("Over 2 years", freshness_buckets["over_2_years"]),
+    ]
 
-    with activity_column_2:
-        st.metric(
-            "3 months - 1 year",
-            freshness_buckets["91_to_365_days"]
-        )
+    for column, (label, value) in zip(
+        (
+            activity_column_1,
+            activity_column_2,
+            activity_column_3,
+            activity_column_4,
+        ),
+        activity_data,
+    ):
+        with column:
+            with st.container(border=True):
+                st.markdown(
+                    f"""
+                    <div class="activity-card">
+                        <div class="activity-card-label">
+                            {label}
+                        </div>
+                        <div class="activity-card-value">
+                            {value}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-    with activity_column_3:
-        st.metric(
-            "1-2 years",
-            freshness_buckets["1_to_2_years"]
-        )
+    st.markdown(
+        """
+        <div class="activity-recent-header">
+            <h3>Recently updated</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    with activity_column_4:
-        st.metric(
-            "Over 2 years",
-            freshness_buckets["over_2_years"]
-        )
+    with st.container(border=True):
+        for index, repository in enumerate(sorted_repositories[:3]):
+            st.markdown(
+                f"""
+                <div class="activity-repository">
+                    <div class="activity-repository-row">
+                        <span class="activity-repository-name">
+                            {repository["name"]}
+                        </span>
+                        <span class="activity-repository-date">
+                            {repository["pushed_at"].strftime("%Y-%m-%d")}
+                        </span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-    st.write("Recently updated")
-
-    for repository in sorted_repositories[:3]:
-        st.write(
-            f"{repository['name']} — "
-            f"{repository['pushed_at'].strftime('%Y-%m-%d')}"
-        )
+            if index < 2:
+                st.markdown(
+                    '<div class="activity-divider"></div>',
+                    unsafe_allow_html=True
+                )
