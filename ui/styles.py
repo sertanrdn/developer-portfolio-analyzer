@@ -196,6 +196,45 @@ def apply_global_styles():
             flex-shrink: 0;
         }
 
+        /* Metadata coverage cards */
+        .coverage-card {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .coverage-label {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .coverage-value {
+            color: #111827;
+            font-size: 1.75rem;
+            font-weight: 500;
+            line-height: 1.3;
+            margin-bottom: 1rem;
+        }
+
+        .coverage-track {
+            width: 100%;
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+
+        .coverage-fill {
+            height: 100%;
+            background-color: #4f46e5;
+            border-radius: 999px;
+        }
+
+        .coverage-count {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
         /* Link buttons */
         .stLinkButton a {
             border: 1px solid #c7d2fe;
