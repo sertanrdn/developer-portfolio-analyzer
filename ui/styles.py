@@ -61,6 +61,19 @@ def apply_global_styles():
             color: #ffffff;
         }
 
+        /* Disabled buttons */
+        .stButton > button:disabled {
+            border: 1px solid #cbd5e1;
+            background-color: #e2e8f0;
+            color: #475569;
+            opacity: 1;
+            cursor: not-allowed;
+        }
+
+        .stButton > button:disabled p {
+            color: #475569;
+        }
+
         /* Application header */
         .app-header {
             max-width: 720px;
