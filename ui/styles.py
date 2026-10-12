@@ -293,6 +293,77 @@ def apply_global_styles():
             background-color: #e2e8f0;
         }
 
+        /* Repository cards */
+        .repo-card-title {
+            color: #111827;
+            font-size: 1rem;
+            font-weight: 650;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+            margin-bottom: 0.5rem;
+        }
+
+        .repo-card-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            color: #64748b;
+            font-size: 0.78rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .repo-card-description {
+            color: #475569;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            min-height: 2.6rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .repo-card-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .repo-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border: 1px solid #e0e7ff;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 0.72rem;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .repo-topic {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            color: #475569;
+        }
+
+        .repo-card-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 0.75rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.75rem;
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+
+        .repo-pagination {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.85rem;
+            padding-top: 0.65rem;
+        }
+
         /* Link buttons */
         .stLinkButton a {
             border: 1px solid #c7d2fe;
