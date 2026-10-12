@@ -7,8 +7,8 @@ def apply_global_styles():
         <style>
         /* Main application */
         .stApp {
-            background-color: #f6f7fb;
-            color: #111827;
+            background-color: #0B1120;
+            color: #E2E8F0;
         }
 
         /* Main content area */
@@ -20,58 +20,21 @@ def apply_global_styles():
 
         /* Headings */
         h1, h2, h3 {
-            color: #111827;
+            color: #F1F5F9;
             letter-spacing: -0.02em;
         }
 
-        h1{
+        h1 {
             font-weight: 700;
         }
 
         p {
-            color: #64748b;
+            color: #94A3B8;
         }
 
         /* Inputs */
         div[data-baseweb="input"] {
             border-radius: 8px;
-        }
-
-        /* Buttons */
-        .stButton > button {
-            min-height: 40px;
-            border: 1px solid #4f46e5;
-            border-radius: 8px;
-            background-color: #4f46e5;
-            color: #ffffff;
-            font-weight: 600;
-        }
-
-        .stButton > button p {
-            color: #ffffff;
-        }
-
-        .stButton > button:hover {
-            border-color: #4338ca;
-            background-color: #4338ca;
-            color: #ffffff;
-        }
-
-        .stButton > button:hover p {
-            color: #ffffff;
-        }
-
-        /* Disabled buttons */
-        .stButton > button:disabled {
-            border: 1px solid #cbd5e1;
-            background-color: #e2e8f0;
-            color: #475569;
-            opacity: 1;
-            cursor: not-allowed;
-        }
-
-        .stButton > button:disabled p {
-            color: #475569;
         }
 
         /* Application header */
@@ -120,14 +83,14 @@ def apply_global_styles():
 
         .profile-metric-label {
             margin-bottom: 0.25rem;
-            color: #64748b;
+            color: #94A3B8;
             font-size: 0.875rem;
             line-height: 1.4;
             text-align: center;
         }
 
         .profile-metric-value {
-            color: #111827;
+            color: #E2E8F0;
             font-size: 1.75rem;
             font-weight: 400;
             line-height: 1.2;
@@ -142,13 +105,13 @@ def apply_global_styles():
 
         .overview-metric-label {
             margin-bottom: 0.35rem;
-            color: #64748b;
+            color: #94A3B8;
             font-size: 0.875rem;
             line-height: 1.4;
         }
 
         .overview-metric-value {
-            color: #111827;
+            color: #E2E8F0;
             font-size: 1.75rem;
             font-weight: 400;
             line-height: 1.2;
@@ -178,7 +141,7 @@ def apply_global_styles():
             align-items: center;
             justify-content: space-between;
             padding: 0.4rem 0;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #263449;
         }
 
         .language-legend-row:last-child {
@@ -186,12 +149,12 @@ def apply_global_styles():
         }
 
         .language-legend-name {
-            color: #475569;
+            color: #CBD5E1;
             font-size: 0.875rem;
         }
 
         .language-legend-percentage {
-            color: #111827;
+            color: #F1F5F9;
             font-size: 0.875rem;
             font-weight: 600;
         }
@@ -215,13 +178,13 @@ def apply_global_styles():
         }
 
         .coverage-label {
-            color: #64748b;
+            color: #94A3B8;
             font-size: 0.875rem;
             margin-bottom: 0.5rem;
         }
 
         .coverage-value {
-            color: #111827;
+            color: #E2E8F0;
             font-size: 1.75rem;
             font-weight: 500;
             line-height: 1.3;
@@ -231,7 +194,7 @@ def apply_global_styles():
         .coverage-track {
             width: 100%;
             height: 8px;
-            background-color: #e2e8f0;
+            background-color: #263449;
             border-radius: 999px;
             overflow: hidden;
             margin-bottom: 0.75rem;
@@ -239,12 +202,12 @@ def apply_global_styles():
 
         .coverage-fill {
             height: 100%;
-            background-color: #4f46e5;
+            background-color: #818CF8;
             border-radius: 999px;
         }
 
         .coverage-count {
-            color: #64748b;
+            color: #94A3B8;
             font-size: 0.8rem;
         }
 
@@ -255,13 +218,13 @@ def apply_global_styles():
         }
 
         .activity-card-label {
-            color: #64748b;
+            color: #94A3B8;
             font-size: 0.875rem;
             margin-bottom: 0.5rem;
         }
 
         .activity-card-value {
-            color: #111827;
+            color: #E2E8F0;
             font-size: 1.75rem;
             font-weight: 500;
             line-height: 1.3;
@@ -291,24 +254,24 @@ def apply_global_styles():
         }
 
         .activity-repository-name {
-            color: #111827;
+            color: #E2E8F0;
             font-size: 0.875rem;
             font-weight: 500;
         }
 
         .activity-repository-date {
-            color: #64748b;
+            color: #94A3B8;
             font-size: 0.8rem;
         }
 
         .activity-divider {
             height: 1px;
-            background-color: #e2e8f0;
+            background-color: #263449;
         }
 
         /* Repository cards */
         .repo-card-title {
-            color: #111827;
+            color: #F1F5F9;
             font-size: 1rem;
             font-weight: 650;
             line-height: 1.4;
@@ -320,13 +283,13 @@ def apply_global_styles():
             display: flex;
             flex-wrap: wrap;
             gap: 0.8rem;
-            color: #64748b;
+            color: #94A3B8;
             font-size: 0.78rem;
             margin-bottom: 0.85rem;
         }
 
         .repo-card-description {
-            color: #475569;
+            color: #CBD5E1;
             font-size: 0.875rem;
             line-height: 1.5;
             min-height: 2.6rem;
@@ -343,61 +306,109 @@ def apply_global_styles():
         .repo-badge {
             display: inline-block;
             padding: 0.2rem 0.5rem;
-            border: 1px solid #e0e7ff;
+            border: 1px solid #373D70;
             border-radius: 999px;
-            background: #eef2ff;
-            color: #4338ca;
+            background-color: #222747;
+            color: #C7D2FE;
             font-size: 0.72rem;
             line-height: 1.4;
             overflow-wrap: anywhere;
         }
 
         .repo-topic {
-            background: #f8fafc;
-            border-color: #e2e8f0;
-            color: #475569;
+            border-color: #334155;
+            background-color: #1E293B;
+            color: #CBD5E1;
         }
 
         .repo-card-footer {
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid #263449;
             padding-top: 0.75rem;
             margin-top: 0.25rem;
             margin-bottom: 0.75rem;
-            color: #64748b;
+            color: #94A3B8;
             font-size: 0.75rem;
         }
 
         .repo-pagination {
             text-align: center;
-            color: #64748b;
+            color: #94A3B8;
             font-size: 0.85rem;
             padding-top: 0.65rem;
         }
 
+        /* Input text and labels */
+        .stApp label,
+        .stApp [data-testid="stWidgetLabel"] p {
+            color: #CBD5E1;
+        }
+
+        /* Dividers */
+        hr {
+            border-color: #263449;
+        }
+
+        /* Buttons */
+        .stButton > button {
+            min-height: 40px;
+            border: 1px solid #6366F1;
+            border-radius: 8px;
+            background-color: #6366F1;
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+
+        .stButton > button p {
+            color: #FFFFFF;
+        }
+
+        .stButton > button:hover {
+            border-color: #818CF8;
+            background-color: #818CF8;
+            color: #0B1120;
+        }
+
+        .stButton > button:hover p {
+            color: #0B1120;
+        }
+
+        /* Disabled buttons */
+        .stButton > button:disabled {
+            border: 1px solid #334155;
+            background-color: #1E293B;
+            color: #94A3B8;
+            opacity: 1;
+            cursor: not-allowed;
+        }
+
+        .stButton > button:disabled p {
+            color: #94A3B8;
+        }
+
         /* Link buttons */
         .stLinkButton a {
-            border: 1px solid #c7d2fe;
+            border: 1px solid #334155;
             border-radius: 8px;
-            background-color: #ffffff;
-            color: #4f46e5;
+            background-color: #111C30;
+            color: #A5B4FC;
             font-weight: 600;
         }
 
         .stLinkButton a p {
-            color: #4f46e5;
+            color: #A5B4FC;
         }
 
         .stLinkButton a:hover {
-            border-color: #4f46e5;
-            background-color: #eef2ff;
-            color: #4338ca;
+            border-color: #818CF8;
+            background-color: #1E293B;
+            color: #C7D2FE;
         }
 
         .stLinkButton a:hover p {
-            color: #4338ca;
+            color: #C7D2FE;
         }
         </style>
         """,
