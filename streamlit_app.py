@@ -28,6 +28,7 @@ from ui.metadata import render_metadata
 from ui.activity import render_activity
 from ui.repositories import render_repositories
 from ui.styles import apply_global_styles
+from ui.navigation import render_navigation
 
 st.set_page_config(
     page_title="Developer Portfolio Analyzer",
@@ -180,6 +181,8 @@ if analyze_button:
 # Render the dashboard using the stored analysis
 if st.session_state.analysis_result is not None:
     analysis_result = st.session_state.analysis_result
+
+    render_navigation()
 
     render_profile(
         analysis_result["profile"]

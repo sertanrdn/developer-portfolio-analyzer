@@ -345,6 +345,35 @@ def apply_global_styles():
             padding-top: 0.65rem;
         }
 
+        /* Section navigation */
+        .section-nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-nav .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.85rem;
+            border: 1px solid #334155;
+            border-radius: 999px;
+            background-color: #111C30;
+            color: #CBD5E1;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .section-nav .nav-link:hover {
+            border-color: #818CF8;
+            background-color: #1E293B;
+            color: #C7D2FE;
+        }
+
         /* Input text and labels */
         .stApp label,
         .stApp [data-testid="stWidgetLabel"] p {
