@@ -11,6 +11,11 @@ def apply_global_styles():
             color: #E2E8F0;
         }
 
+        /* Streamlit's native header */
+        header[data-testid="stHeader"] {
+            background-color: #0B1120;
+        }
+
         /* Main content area */
         .block-container {
             max-width: 1180px;
