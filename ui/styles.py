@@ -64,7 +64,7 @@ def apply_global_styles():
 
         /* Dashboard sections */
         .section-header {
-            margin-top: 3.5rem;
+            margin-top: 1.75rem;
             margin-bottom: 1.25rem;
         }
 
