@@ -111,13 +111,14 @@ def render_repositories(repository_details):
 
                 st.link_button("View on GitHub ↗", repository["html_url"])
 
-    previous, page, next_button = st.columns([1, 2, 1])
+    _, previous, page, next_button, _ = st.columns([3, 1.2, 1.5, 1.2, 3])
 
     with previous:
         if st.button(
             "← Previous",
             disabled=st.session_state.repository_page <= 1,
             key="repositories_previous",
+            width="stretch",
         ):
             st.session_state.repository_page -= 1
             st.rerun()
@@ -134,6 +135,7 @@ def render_repositories(repository_details):
             "Next →",
             disabled=st.session_state.repository_page >= total_pages,
             key="repositories_next",
+            width="stretch",
         ):
             st.session_state.repository_page += 1
             st.rerun()
