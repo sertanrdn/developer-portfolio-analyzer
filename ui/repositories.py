@@ -111,7 +111,7 @@ def render_repositories(repository_details):
 
                 st.link_button("View on GitHub ↗", repository["html_url"])
 
-    _, previous, page, next_button, _ = st.columns([3, 1.2, 1.5, 1.2, 3])
+    _, previous, page, next_button, _ = st.columns([2, 1.8, 1.5, 1.8, 2])
 
     with previous:
         if st.button(
