@@ -345,13 +345,28 @@ def apply_global_styles():
             padding-top: 0.65rem;
         }
 
-        /* Section navigation */
+        /* Section navigation: sticky full-width stripe */
+        .stElementContainer:has(.section-nav) {
+            position: sticky;
+            top: 60px;              /* exactly below Streamlit's 60px header */
+            z-index: 999;           /* above page content, below Streamlit's header */
+        }
+
         .section-nav {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 0.5rem;
-            margin-bottom: 0.5rem;
+            width: 100vw;                   /* full browser width */
+            margin-left: calc(50% - 50vw);  /* pull out of the centred 1180px column */
+            padding: 0.6rem 1rem;
+            background-color: #0B1120;
+            border-bottom: 1px solid #334155;
+        }
+
+        /* Stop section titles landing under the header + stripe after a click */
+        .stMain {
+            scroll-padding-top: 100px;
         }
 
         .section-nav .nav-link {
