@@ -343,6 +343,13 @@ def apply_global_styles():
             color: #94A3B8;
             font-size: 0.85rem;
             padding-top: 0.65rem;
+            padding-bottom: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .repo-pagination {
+                padding-top: 0;
+            }
         }
 
         /* Section navigation: sticky full-width stripe */
