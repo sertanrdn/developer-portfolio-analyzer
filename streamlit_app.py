@@ -4,6 +4,9 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from github_api import (
+    GitHubError,
+    GitHubAuthenticationError,
+    GitHubUserNotFoundError,
     fetch_user_profile,
     fetch_repositories,
     fetch_language_data,
@@ -81,17 +84,23 @@ if "repository_page" not in st.session_state:
 
 # Fetch and analyze data only when the Analyze button is clicked
 if analyze_button:
+    st.session_state.analysis_result = None
+    
     cleaned_username = username.strip()
 
     if not cleaned_username:
-        st.error("Error: You need to enter a username")
-    else:
-        user_profile = fetch_user_profile(
-            username=cleaned_username,
-            github_token=github_token
+        st.error("Please enter a GitHub username")
+    elif not github_token:
+        st.error(
+            "GitHub token not found. Please configure GITHUB_TOKEN in your .env file."
         )
+    else:
+        try:
+            user_profile = fetch_user_profile(
+                username=cleaned_username,
+                github_token=github_token
+            )
 
-        if user_profile is not None:
             processed_user_profile = process_user_profile(
                 user_profile=user_profile
             )
@@ -101,81 +110,90 @@ if analyze_button:
                 github_token=github_token
             )
 
-            if repositories is not None:
-                processed_repos = process_repositories(
-                    repositories=repositories
-                )
+            processed_repos = process_repositories(
+                repositories=repositories
+            )
 
-                repository_summary = get_repository_summary(
-                    processed_repositories=processed_repos
-                )
+            repository_summary = get_repository_summary(
+                processed_repositories=processed_repos
+            )
 
-                (
-                    language_counts,
-                    no_language_count,
-                    primary_language_percentages
-                ) = analyze_languages(
-                    processed_repositories=processed_repos
-                )
+            (
+                language_counts,
+                no_language_count,
+                primary_language_percentages
+            ) = analyze_languages(
+                processed_repositories=processed_repos
+            )
 
-                language_results = fetch_language_data(
-                    username=cleaned_username,
-                    repositories=processed_repos,
-                    github_token=github_token
-                )
+            language_results = fetch_language_data(
+                username=cleaned_username,
+                repositories=processed_repos,
+                github_token=github_token
+            )
 
-                (
-                    language_repo_counts,
-                    no_language_data_count,
-                    unknown_language_count
-                ) = analyze_detailed_languages(language_results)
+            (
+                language_repo_counts,
+                no_language_data_count,
+                unknown_language_count
+            ) = analyze_detailed_languages(language_results)
 
-                metadata_analysis = analyze_metadata_coverage(
-                    processed_repositories=processed_repos,
-                    original_repositories=repository_summary["original"]
-                )
+            metadata_analysis = analyze_metadata_coverage(
+                processed_repositories=processed_repos,
+                original_repositories=repository_summary["original"]
+            )
 
-                readme_results = fetch_readme_data(
-                    username=cleaned_username,
-                    repositories=processed_repos,
-                    github_token=github_token
-                )
+            readme_results = fetch_readme_data(
+                username=cleaned_username,
+                repositories=processed_repos,
+                github_token=github_token
+            )
 
-                readme_analysis = analyze_readme_coverage(
-                    readme_results=readme_results
-                )
+            readme_analysis = analyze_readme_coverage(
+                readme_results=readme_results
+            )
 
-                (
-                    sorted_repositories,
-                    recently_active_count,
-                    freshness_buckets
-                ) = analyze_recent_activity(
-                    processed_repositories=processed_repos
-                )
+            (
+                sorted_repositories,
+                recently_active_count,
+                freshness_buckets
+            ) = analyze_recent_activity(
+                processed_repositories=processed_repos
+            )
 
-                repository_details = build_repository_details(
-                    processed_repositories=processed_repos,
-                    readme_results=readme_results,
-                    language_results=language_results
-                )
+            repository_details = build_repository_details(
+                processed_repositories=processed_repos,
+                readme_results=readme_results,
+                language_results=language_results
+            )
 
-                analysis_result = {
-                    "profile": processed_user_profile,
-                    "repository_summary": repository_summary,
-                    "primary_language_percentages": primary_language_percentages,
-                    "detailed_language_counts": language_repo_counts,
-                    "metadata_analysis": metadata_analysis,
-                    "readme_analysis": readme_analysis,
-                    "freshness_buckets": freshness_buckets,
-                    "sorted_repositories": sorted_repositories,
-                    "repository_details": repository_details,
-                }
+            analysis_result = {
+                "profile": processed_user_profile,
+                "repository_summary": repository_summary,
+                "primary_language_percentages": primary_language_percentages,
+                "detailed_language_counts": language_repo_counts,
+                "metadata_analysis": metadata_analysis,
+                "readme_analysis": readme_analysis,
+                "freshness_buckets": freshness_buckets,
+                "sorted_repositories": sorted_repositories,
+                "repository_details": repository_details,
+            }
 
-                st.session_state.analysis_result = analysis_result
-                st.session_state.repository_page = 1
+            st.session_state.analysis_result = analysis_result
+            st.session_state.repository_page = 1
 
-        else:
-            st.error("Could not load this GitHub profile.")
+        except GitHubUserNotFoundError:
+            st.session_state.analysis_result = None
+            st.error(f"No GitHub user named '{cleaned_username}' was found.")
+        except GitHubAuthenticationError:
+            st.session_state.analysis_result = None
+            st.error(
+                "The app's GitHub token is invalid or expired. "
+                "Please check GITHUB_TOKEN in your .env file."
+            )
+        except GitHubError as error:
+            st.session_state.analysis_result = None
+            st.error(f"GitHub API error: {error}")
 
 
 # Render the dashboard using the stored analysis

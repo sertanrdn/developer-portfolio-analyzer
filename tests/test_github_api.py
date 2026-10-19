@@ -265,6 +265,21 @@ def test_fetch_repositories_forbidden_other_than_rate_limit():
 
         assert mock_get.call_count == 1
 
+def test_fetch_repositories_failure_on_later_page_raises():
+    with patch("github_api.requests.get") as mock_get:
+        first_response = Mock()
+        first_response.status_code = 200
+        first_response.json.return_value = [{"name": "project-a"}]
+
+        second_response = Mock()
+        second_response.status_code = 500
+
+        mock_get.side_effect = [first_response, second_response]
+
+        with pytest.raises(GitHubRequestError, match="500"):
+            fetch_repositories(username="testuser", github_token="test-token")
+
+        assert mock_get.call_count == 2
 
 def test_fetch_repositories_server_error_fallback():
     with patch("github_api.requests.get") as mock_get:

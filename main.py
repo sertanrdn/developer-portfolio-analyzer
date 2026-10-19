@@ -34,6 +34,7 @@ cleaned_username = username.strip()
 
 if not cleaned_username:
     print("Error: GitHub username is required.")
+    sys.exit(1)
 else:
     print("GitHub username:", cleaned_username)
 
