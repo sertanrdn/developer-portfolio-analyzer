@@ -182,18 +182,24 @@ def test_fetch_repositories_user_not_found():
         fake_response.status_code = 404
         mock_get.return_value = fake_response
 
-        result = fetch_repositories(username="testuser", github_token="test-token")
+        with pytest.raises(GitHubUserNotFoundError):
+            fetch_repositories(
+                username="testuser", 
+                github_token="test-token"
+            )
 
-        assert result is None
         assert mock_get.call_count == 1
         
 def test_fetch_repositories_timeout():
     with patch("github_api.requests.get") as mock_get:
         mock_get.side_effect = requests.exceptions.Timeout
 
-        result = fetch_repositories(username="testuser", github_token="test-token")
+        with pytest.raises(GitHubRequestError, match="timed out"):
+            fetch_repositories(
+                username="testuser", 
+                github_token="test-token"
+            )
 
-        assert result is None
         assert mock_get.call_count == 1
 
 def test_fetch_repositories_rate_limit():
@@ -205,9 +211,73 @@ def test_fetch_repositories_rate_limit():
         }
         mock_get.return_value = fake_response
 
-        result = fetch_repositories(username="testuser", github_token="test-token")
+        with pytest.raises(GitHubRateLimitError):
+            fetch_repositories(
+                username="testuser", 
+                github_token="test-token"
+            )
 
-        assert result is None
+        assert mock_get.call_count == 1
+
+
+def test_fetch_repositories_authentication_error():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 401
+        mock_get.return_value = fake_response
+
+        with pytest.raises(GitHubAuthenticationError):
+            fetch_repositories(
+                username="testuser",
+                github_token="invalid-token"
+            )
+
+        assert mock_get.call_count == 1
+
+
+def test_fetch_repositories_connection_error():
+    with patch("github_api.requests.get") as mock_get:
+        mock_get.side_effect = requests.exceptions.ConnectionError
+
+        with pytest.raises(GitHubRequestError, match="Could not connect"):
+            fetch_repositories(
+                username="testuser",
+                github_token="test-token"
+            )
+
+        assert mock_get.call_count == 1
+
+
+def test_fetch_repositories_forbidden_other_than_rate_limit():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 403
+        fake_response.headers = {
+            "X-RateLimit-Remaining": "42"
+        }
+        mock_get.return_value = fake_response
+
+        with pytest.raises(GitHubRequestError, match="denied"):
+            fetch_repositories(
+                username="testuser",
+                github_token="test-token"
+            )
+
+        assert mock_get.call_count == 1
+
+
+def test_fetch_repositories_server_error_fallback():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 500
+        mock_get.return_value = fake_response
+
+        with pytest.raises(GitHubRequestError, match="500"):
+            fetch_repositories(
+                username="testuser",
+                github_token="test-token"
+            )
+
         assert mock_get.call_count == 1
 
 # Tests for readme data fetching
