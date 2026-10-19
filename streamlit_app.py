@@ -185,7 +185,6 @@ if analyze_button:
             st.session_state.repository_page = 1
 
         except GitHubUserNotFoundError:
-            st.session_state.analysis_result = None
             st.error(f"No GitHub user named '{cleaned_username}' was found.")
         except GitHubAuthenticationError:
             st.error(
@@ -209,7 +208,7 @@ if st.session_state.analysis_result is not None:
 
     unknown_readmes = analysis_result["readme_analysis"]["unknown_readme"]
     unknown_languages = analysis_result.get("unknown_language_count", 0)
-    if unknown_readmes or unknown_languages:        
+    if unknown_readmes or unknown_languages:
         st.warning(
             "Some checks could not be completed, so these results are partial. "
             f"README status is unknown for {unknown_readmes} "
