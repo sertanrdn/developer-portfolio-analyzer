@@ -130,7 +130,7 @@ def fetch_readme_data(username, repositories, github_token):
                 readme_url, headers=request_headers, timeout=10
             )
 
-        except requests.exceptions.Timeout:    
+        except requests.exceptions.Timeout:
             readme_results.append(make_readme_entry(repo_name, None, "timed out"))
             continue
         except requests.exceptions.ConnectionError:
@@ -153,15 +153,14 @@ def fetch_readme_data(username, repositories, github_token):
         elif readme_response.status_code == 403:
             if readme_response.headers.get("X-RateLimit-Remaining") == "0":
                 stop_reason = "rate limit reached"
+                readme_results.append(
+                    make_readme_entry(repo_name, None, stop_reason)
+                )
             else:
                 readme_results.append(
                     make_readme_entry(repo_name, None, "access denied")
                 )
-                continue
 
-            readme_results.append(
-                make_readme_entry(repo_name, None, stop_reason)
-            )
         else:
             readme_results.append(
                 make_readme_entry(
