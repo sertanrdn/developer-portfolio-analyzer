@@ -171,72 +171,74 @@ def fetch_readme_data(username, repositories, github_token):
 
     return readme_results
 
+def make_language_entry(repo_name, languages, error=None):
+    return {"repo_name": repo_name, "languages": languages, "error": error}
+
 def fetch_language_data(username, repositories, github_token):
     language_results = []
     request_headers = create_headers(token=github_token)
+    stop_reason = None
     
     for repository in repositories:
-        if not repository.get("fork"):
-            repo_name = repository.get("name")
-            language_url = f"https://api.github.com/repos/{username}/{repo_name}/languages"
+        if repository.get("fork"):
+            continue
 
-            try:
-                language_response = requests.get(
-                    language_url, headers=request_headers, timeout=10
+        repo_name = repository.get("name")
+
+        if stop_reason:
+            language_results.append(
+                make_language_entry(repo_name, None, f"skipped: {stop_reason}")
+            )
+            continue
+
+        language_url = f"https://api.github.com/repos/{username}/{repo_name}/languages"
+
+        try:
+            language_response = requests.get(
+                language_url, headers=request_headers, timeout=10
+            )
+        except requests.exceptions.Timeout:
+            language_results.append(
+                make_language_entry(repo_name, None, "timed out")
+            )
+            continue
+
+        except requests.exceptions.ConnectionError:
+            language_results.append(
+                make_language_entry(repo_name, None, "could not connect")
+            )
+            continue
+
+        except requests.exceptions.RequestException:
+            language_results.append(
+                make_language_entry(repo_name, None, "request failed")
+            )
+            continue
+
+        if language_response.status_code == 200:
+            language_results.append(
+                make_language_entry(repo_name, language_response.json())
+            )
+        elif language_response.status_code == 401:
+            stop_reason = "authentication failed"
+            language_results.append(
+                make_language_entry(repo_name, None, stop_reason)
+            )
+        elif language_response.status_code == 403:
+            if language_response.headers.get("X-RateLimit-Remaining") == "0":
+                stop_reason = "rate limit reached"
+                language_results.append(
+                    make_language_entry(repo_name, None, stop_reason)
                 )
-            except requests.exceptions.Timeout:
-                print(f"Warning: Language request timed out for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
-                continue
-
-            except requests.exceptions.ConnectionError:
-                print(f"Warning: Could not connect to GitHub while checking languages for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
-                continue
-
-            except requests.exceptions.RequestException:
-                print(f"Warning: Language request failed for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
-                continue
-
-            if language_response.status_code == 200:
-                language_dict = language_response.json()
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": language_dict
-                }
-                language_results.append(language_data)
-            elif language_response.status_code == 401:
-                print(f"Warning: Authentication failed while checking languages for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
-            elif language_response.status_code == 403:
-                print(f"Warning: GitHub denied the languages request for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
             else:
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
+                language_results.append(
+                    make_language_entry(repo_name, None, "access denied")
+                )
+        else:
+            language_results.append(
+                make_language_entry(
+                    repo_name, None, f"status {language_response.status_code}"
+                )
+            )
 
     return language_results

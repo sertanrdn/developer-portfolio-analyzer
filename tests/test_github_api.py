@@ -493,7 +493,7 @@ def test_fetch_readme_data_rate_limit_stops_further_requests():
         
         assert mock_get.call_count == 2
 
-# Tests for fetching language data
+# Tests for language data fetching
 def test_fetch_language_data():
     repositories = [
         {"name": "project-a", "fork": False},
@@ -502,43 +502,170 @@ def test_fetch_language_data():
     ]
 
     with patch("github_api.requests.get") as mock_get:
-        first_response = Mock()
-        first_response.status_code = 200
-        first_response.json.return_value = {"Python": 1000, "HTML": 200}
-
-        second_response = Mock()
-        second_response.status_code = 200
-        second_response.json.return_value = {}
-
-        mock_get.side_effect = [first_response, second_response]
-
-        result = fetch_language_data(
-            username="testuser", 
-            repositories=repositories, 
-            github_token="test-token"
-        )
-
-        assert result == [
-            {"repo_name": "project-a", "languages": {"Python": 1000, "HTML": 200}},
-            {"repo_name": "project-b", "languages": {}}
+        mock_get.side_effect = [
+            make_response(200, json_data={"Python": 1000, "HTML": 200}),
+            make_response(200, json_data={})
         ]
-        assert mock_get.call_count == 2
-
-def test_fetch_language_data_timeout():
-    repositories = [
-        {"name": "project-a", "fork": False}
-    ]
-
-    with patch("github_api.requests.get") as mock_get:
-        mock_get.side_effect = requests.exceptions.Timeout
 
         result = fetch_language_data(
-            username="testuser", 
+            username="testuser",
             repositories=repositories,
             github_token="test-token"
         )
 
         assert result == [
-            {"repo_name": "project-a", "languages": None}
+            {"repo_name": "project-a", "languages": {"Python": 1000, "HTML": 200}, "error": None},
+            {"repo_name": "project-b", "languages": {}, "error": None}
+        ]
+        assert mock_get.call_count == 2
+
+
+def test_fetch_language_data_timeout():
+    repositories = [{"name": "project-a", "fork": False}]
+
+    with patch("github_api.requests.get") as mock_get:
+        mock_get.side_effect = requests.exceptions.Timeout
+
+        result = fetch_language_data(
+            username="testuser",
+            repositories=repositories,
+            github_token="test-token"
+        )
+
+        assert result == [
+            {"repo_name": "project-a", "languages": None, "error": "timed out"}
         ]
         assert mock_get.call_count == 1
+
+
+def test_fetch_language_data_connection_error():
+    repositories = [{"name": "project-a", "fork": False}]
+
+    with patch("github_api.requests.get") as mock_get:
+        mock_get.side_effect = requests.exceptions.ConnectionError
+
+        result = fetch_language_data(
+            username="testuser",
+            repositories=repositories,
+            github_token="test-token"
+        )
+
+        assert result == [
+            {"repo_name": "project-a", "languages": None, "error": "could not connect"}
+        ]
+
+
+def test_fetch_language_data_authentication_error_is_unknown():
+    repositories = [{"name": "project-a", "fork": False}]
+
+    with patch("github_api.requests.get") as mock_get:
+        mock_get.return_value = make_response(401)
+
+        result = fetch_language_data(
+            username="testuser",
+            repositories=repositories,
+            github_token="bad-token"
+        )
+
+        assert result == [
+            {"repo_name": "project-a", "languages": None, "error": "authentication failed"}
+        ]
+
+
+def test_fetch_language_data_authentication_error_stops_further_requests():
+    repositories = [
+        {"name": "project-a", "fork": False},
+        {"name": "project-b", "fork": False},
+        {"name": "project-c", "fork": False},
+    ]
+
+    with patch("github_api.requests.get") as mock_get:
+        mock_get.side_effect = [make_response(401)]
+
+        result = fetch_language_data(
+            username="testuser",
+            repositories=repositories,
+            github_token="bad-token",
+        )
+
+        assert result == [
+            {
+                "repo_name": "project-a",
+                "languages": None,
+                "error": "authentication failed",
+            },
+            {
+                "repo_name": "project-b",
+                "languages": None,
+                "error": "skipped: authentication failed",
+            },
+            {
+                "repo_name": "project-c",
+                "languages": None,
+                "error": "skipped: authentication failed",
+            },
+        ]
+
+        assert mock_get.call_count == 1
+
+def test_fetch_language_data_forbidden_other_than_rate_limit_is_unknown():
+    repositories = [{"name": "project-a", "fork": False}]
+
+    with patch("github_api.requests.get") as mock_get:
+        mock_get.return_value = make_response(
+            403, headers={"X-RateLimit-Remaining": "42"}
+        )
+
+        result = fetch_language_data(
+            username="testuser",
+            repositories=repositories,
+            github_token="test-token"
+        )
+
+        assert result == [
+            {"repo_name": "project-a", "languages": None, "error": "access denied"}
+        ]
+
+
+def test_fetch_language_data_server_error_is_unknown():
+    repositories = [{"name": "project-a", "fork": False}]
+
+    with patch("github_api.requests.get") as mock_get:
+        mock_get.return_value = make_response(500)
+
+        result = fetch_language_data(
+            username="testuser",
+            repositories=repositories,
+            github_token="test-token"
+        )
+
+        assert result == [
+            {"repo_name": "project-a", "languages": None, "error": "status 500"}
+        ]
+
+
+def test_fetch_language_data_rate_limit_stops_further_requests():
+    repositories = [
+        {"name": "project-a", "fork": False},
+        {"name": "project-b", "fork": False},
+        {"name": "project-c", "fork": False}
+    ]
+
+    with patch("github_api.requests.get") as mock_get:
+        mock_get.side_effect = [
+            make_response(200, json_data={"Python": 1000}),
+            make_response(403, headers=RATE_LIMIT_HEADERS)
+        ]
+
+        result = fetch_language_data(
+            username="testuser",
+            repositories=repositories,
+            github_token="test-token"
+        )
+
+        assert result == [
+            {"repo_name": "project-a", "languages": {"Python": 1000}, "error": None},
+            {"repo_name": "project-b", "languages": None, "error": "rate limit reached"},
+            {"repo_name": "project-c", "languages": None, "error": "skipped: rate limit reached"}
+        ]
+        assert mock_get.call_count == 2
