@@ -93,7 +93,7 @@ def test_fetch_user_profile_timeout_error():
         # Simulate a network timeout using side_effect
         mock_get.side_effect = requests.exceptions.Timeout
 
-        with pytest.raises(GitHubRequestError):
+        with pytest.raises(GitHubRequestError, match="timed out"):
             fetch_user_profile(
                 username="testuser",
                 github_token="test-token"
@@ -126,6 +126,21 @@ def test_fetch_user_profile_connection_error():
         # Simulate a network connection failure
         mock_get.side_effect = requests.exceptions.ConnectionError
 
+        with pytest.raises(GitHubRequestError, match="Could not connect"):
+            fetch_user_profile(
+                username="testuser",
+                github_token="test-token"
+            )
+
+        assert mock_get.call_count == 1
+
+def test_fetch_user_profile_server_error_fallback():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 500
+        mock_get.return_value = fake_response
+
+        # Any unhandled status code should raise a generic GitHubRequestError
         with pytest.raises(GitHubRequestError):
             fetch_user_profile(
                 username="testuser",
