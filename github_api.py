@@ -76,7 +76,7 @@ def fetch_repositories(username, github_token):
         except requests.exceptions.Timeout:
             raise GitHubRequestError("GitHub request timed out.")
         except requests.exceptions.ConnectionError:
-            raise GitHubRequestError("Error: Could not connect to GitHub.")
+            raise GitHubRequestError("Could not connect to GitHub.")
         except requests.exceptions.RequestException:
             raise GitHubRequestError("GitHub request failed due to a network or request error.")
 

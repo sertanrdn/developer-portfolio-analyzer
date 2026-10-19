@@ -14,6 +14,7 @@ from analysis import (
     build_repository_details
 ) 
 from github_api import (
+    GitHubError,
     fetch_user_profile,
     fetch_repositories,
     fetch_readme_data,
@@ -36,116 +37,123 @@ if not cleaned_username:
 else:
     print("GitHub username:", cleaned_username)
 
-    user_profile = fetch_user_profile(
-        username=cleaned_username, github_token=github_token
-    )
+    try:
+        user_profile = fetch_user_profile(
+            username=cleaned_username, github_token=github_token
+        )
+    
+    except GitHubError as error:
+        print(f"Error fetching GitHub profile: {error}")
+        sys.exit(1)
 
-    if user_profile is not None:
-        processed_user_profile = process_user_profile(user_profile)
+    processed_user_profile = process_user_profile(user_profile)
 
+    try:
         repositories = fetch_repositories(
             username=cleaned_username, github_token=github_token
         )
+    except GitHubError as error:
+        print(f"Error fetching repositories: {error}")
+        sys.exit(1)
         
-        if repositories is not None:
-            processed_repositories = process_repositories(repositories)
-            readme_results = fetch_readme_data(
-                username=cleaned_username, repositories=processed_repositories, github_token=github_token
-            )
-            language_results = fetch_language_data(
-                username=cleaned_username, repositories=processed_repositories, github_token=github_token
-            )
+    processed_repositories = process_repositories(repositories)
+    readme_results = fetch_readme_data(
+        username=cleaned_username, repositories=processed_repositories, github_token=github_token
+    )
+    language_results = fetch_language_data(
+        username=cleaned_username, repositories=processed_repositories, github_token=github_token
+    )
 
-            repository_details = build_repository_details(
-                processed_repositories,
-                readme_results,
-                language_results
-            )
+    repository_details = build_repository_details(
+        processed_repositories,
+        readme_results,
+        language_results
+    )
 
-            repository_summary = get_repository_summary(processed_repositories)
-            language_counts, no_language_count, primary_language_percentages = (
-                analyze_languages(processed_repositories)
-            )
-            language_repo_counts, no_language_data_count, unknown_language_count = analyze_detailed_languages(language_results)
+    repository_summary = get_repository_summary(processed_repositories)
+    language_counts, no_language_count, primary_language_percentages = (
+        analyze_languages(processed_repositories)
+    )
+    language_repo_counts, no_language_data_count, unknown_language_count = analyze_detailed_languages(language_results)
 
-            original_repositories = repository_summary["original"]
-            metadata_analysis = analyze_metadata_coverage(
-                processed_repositories,
-                original_repositories
-            )
-            sorted_repositories, recently_active_count, freshness_buckets = (
-                analyze_recent_activity(processed_repositories)
-            )
+    original_repositories = repository_summary["original"]
+    metadata_analysis = analyze_metadata_coverage(
+        processed_repositories,
+        original_repositories
+    )
+    sorted_repositories, recently_active_count, freshness_buckets = (
+        analyze_recent_activity(processed_repositories)
+    )
 
-            readme_analysis = analyze_readme_coverage(readme_results)
+    readme_analysis = analyze_readme_coverage(readme_results)
 
-            print("")
-            print("GitHub Profile")
-            print("--------------")
-            print("Username:", processed_user_profile.get("login"))
-            print("Name:", processed_user_profile.get("name") or "Not provided")
-            print("Bio:", processed_user_profile.get("bio") or "Not provided")
-            print("Location:", processed_user_profile.get("location") or "Not provided")
-            print("Company:", processed_user_profile.get("company") or "Not provided")
-            print("Blog:", processed_user_profile.get("blog") or "Not provided")
-            print("Public repositories:", processed_user_profile.get("public_repos"))
-            print("Followers:", processed_user_profile.get("followers"))
-            print("Following:", processed_user_profile.get("following"))
-            print("GitHub profile:", processed_user_profile.get("html_url"))
-            print("Member since:", processed_user_profile.get("created_at"))
+    print("")
+    print("GitHub Profile")
+    print("--------------")
+    print("Username:", processed_user_profile.get("login"))
+    print("Name:", processed_user_profile.get("name") or "Not provided")
+    print("Bio:", processed_user_profile.get("bio") or "Not provided")
+    print("Location:", processed_user_profile.get("location") or "Not provided")
+    print("Company:", processed_user_profile.get("company") or "Not provided")
+    print("Blog:", processed_user_profile.get("blog") or "Not provided")
+    print("Public repositories:", processed_user_profile.get("public_repos"))
+    print("Followers:", processed_user_profile.get("followers"))
+    print("Following:", processed_user_profile.get("following"))
+    print("GitHub profile:", processed_user_profile.get("html_url"))
+    print("Member since:", processed_user_profile.get("created_at"))
 
-            print("")
-            print("Repository Analysis")
-            print("-------------------")
+    print("")
+    print("Repository Analysis")
+    print("-------------------")
 
-            print("Total repositories:", repository_summary["total"])
-            print("Original repositories:", repository_summary["original"])
-            print("Forked repositories:", repository_summary["forked"])
-            print("Archived original repositories:", repository_summary["archived"])
+    print("Total repositories:", repository_summary["total"])
+    print("Original repositories:", repository_summary["original"])
+    print("Forked repositories:", repository_summary["forked"])
+    print("Archived original repositories:", repository_summary["archived"])
 
-            print("Primary languages (original repositories):")
-            for language, count in language_counts.items():
-                print(language, count, sep=": ")
-            print("No primary language:", no_language_count)
+    print("Primary languages (original repositories):")
+    for language, count in language_counts.items():
+        print(language, count, sep=": ")
+    print("No primary language:", no_language_count)
 
-            print("Primary language distribution:")
-            for language, percentage in primary_language_percentages.items():
-                print(f"{language}: {percentage}%")
+    print("Primary language distribution:")
+    for language, percentage in primary_language_percentages.items():
+        print(f"{language}: {percentage}%")
 
-            print("Languages across original repositories:")
-            for language, count in language_repo_counts.items():
-                print(language, count, sep=": ")
-            print("No detected language data:", no_language_data_count)
-            print("Unknown language status:", unknown_language_count)
+    print("Languages across original repositories:")
+    for language, count in language_repo_counts.items():
+        print(language, count, sep=": ")
+    print("No detected language data:", no_language_data_count)
+    print("Unknown language status:", unknown_language_count)
 
-            print("Description coverage:")
-            print("With description:", metadata_analysis["with_description"])
-            print("Without description:", metadata_analysis["without_description"])
-            print(f"Coverage: {metadata_analysis['description_coverage']}%")
+    print("Description coverage:")
+    print("With description:", metadata_analysis["with_description"])
+    print("Without description:", metadata_analysis["without_description"])
+    print(f"Coverage: {metadata_analysis['description_coverage']}%")
 
-            print("Topics coverage:")
-            print("With topics:", metadata_analysis["with_topics"])
-            print("Without topics:", metadata_analysis["without_topics"])
-            print(f"Coverage: {metadata_analysis['topics_coverage']}%")
+    print("Topics coverage:")
+    print("With topics:", metadata_analysis["with_topics"])
+    print("Without topics:", metadata_analysis["without_topics"])
+    print(f"Coverage: {metadata_analysis['topics_coverage']}%")
 
-            print(f"Recently active original repositories (last 90 days): {recently_active_count} of {original_repositories}")
-            print("Repository freshness:")
-            print("Last 90 days:", freshness_buckets["last_90_days"])
-            print("91–365 days:", freshness_buckets["91_to_365_days"])
-            print("1–2 years:", freshness_buckets["1_to_2_years"])
-            print("Over 2 years:", freshness_buckets["over_2_years"])
+    print(f"Recently active original repositories (last 90 days): {recently_active_count} of {original_repositories}")
+    print("Repository freshness:")
+    print("Last 90 days:", freshness_buckets["last_90_days"])
+    print("91–365 days:", freshness_buckets["91_to_365_days"])
+    print("1–2 years:", freshness_buckets["1_to_2_years"])
+    print("Over 2 years:", freshness_buckets["over_2_years"])
 
-            print("Recently updated repositories:")
-            for repository in sorted_repositories[:3]:
-                repo_name = repository.get("name")
-                pushed_at = repository.get("pushed_at")
+    print("Recently updated repositories:")
+    for repository in sorted_repositories[:3]:
+        repo_name = repository.get("name")
+        pushed_at = repository.get("pushed_at")
 
-                formatted_date = pushed_at.strftime("%Y-%m-%d")
+        formatted_date = pushed_at.strftime("%Y-%m-%d")
 
-                print(f"{repo_name} — {formatted_date}")
+        print(f"{repo_name} — {formatted_date}")
 
-            print("README coverage:")
-            print("With README:", readme_analysis["with_readme"])
-            print("Without README:", readme_analysis["without_readme"])
-            print("Unknown README status:", readme_analysis["unknown_readme"])
-            print(f"Coverage: {readme_analysis['readme_coverage']}%")
+    print("README coverage:")
+    print("With README:", readme_analysis["with_readme"])
+    print("Without README:", readme_analysis["without_readme"])
+    print("Unknown README status:", readme_analysis["unknown_readme"])
+    print(f"Coverage: {readme_analysis['readme_coverage']}%")
