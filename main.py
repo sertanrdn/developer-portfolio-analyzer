@@ -65,6 +65,20 @@ else:
         username=cleaned_username, repositories=processed_repositories, github_token=github_token
     )
 
+    for result in readme_results:
+        if result.get("error"):
+            print(
+                f"Warning: README check for "
+                f"{result['repo_name']}: {result['error']}"
+            )
+
+    for result in language_results:
+        if result.get("error"):
+            print(
+                f"Warning: language check for "
+                f"{result['repo_name']}: {result['error']}"
+            )
+
     repository_details = build_repository_details(
         processed_repositories,
         readme_results,

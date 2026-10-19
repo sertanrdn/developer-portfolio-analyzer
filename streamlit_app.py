@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from github_api import (
     GitHubError,
     GitHubAuthenticationError,
+    GitHubRateLimitError,
     GitHubUserNotFoundError,
     fetch_user_profile,
     fetch_repositories,
@@ -85,7 +86,7 @@ if "repository_page" not in st.session_state:
 # Fetch and analyze data only when the Analyze button is clicked
 if analyze_button:
     st.session_state.analysis_result = None
-    
+
     cleaned_username = username.strip()
 
     if not cleaned_username:
@@ -172,6 +173,7 @@ if analyze_button:
                 "repository_summary": repository_summary,
                 "primary_language_percentages": primary_language_percentages,
                 "detailed_language_counts": language_repo_counts,
+                "unknown_language_count": unknown_language_count,
                 "metadata_analysis": metadata_analysis,
                 "readme_analysis": readme_analysis,
                 "freshness_buckets": freshness_buckets,
@@ -186,13 +188,16 @@ if analyze_button:
             st.session_state.analysis_result = None
             st.error(f"No GitHub user named '{cleaned_username}' was found.")
         except GitHubAuthenticationError:
-            st.session_state.analysis_result = None
             st.error(
                 "The app's GitHub token is invalid or expired. "
                 "Please check GITHUB_TOKEN in your .env file."
             )
+        except GitHubRateLimitError:
+            st.error(
+                "GitHub's request limit has been reached. "
+                "Please wait a while and try again."
+            )
         except GitHubError as error:
-            st.session_state.analysis_result = None
             st.error(f"GitHub API error: {error}")
 
 
@@ -201,6 +206,17 @@ if st.session_state.analysis_result is not None:
     analysis_result = st.session_state.analysis_result
 
     render_navigation()
+
+    unknown_readmes = analysis_result["readme_analysis"]["unknown_readme"]
+    unknown_languages = analysis_result.get("unknown_language_count", 0)
+    if unknown_readmes or unknown_languages:        
+        st.warning(
+            "Some checks could not be completed, so these results are partial. "
+            f"README status is unknown for {unknown_readmes} "
+            f"{'repository' if unknown_readmes == 1 else 'repositories'}, "
+            f"and language data is unknown for {unknown_languages}. "
+            "Try again later."
+        )
 
     render_profile(
         analysis_result["profile"]
