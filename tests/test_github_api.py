@@ -1,4 +1,5 @@
 import requests
+import pytest
 
 from unittest.mock import Mock, patch
 
@@ -6,7 +7,11 @@ from github_api import (
     fetch_user_profile, 
     fetch_repositories, 
     fetch_readme_data, 
-    fetch_language_data
+    fetch_language_data,
+    GitHubUserNotFoundError,
+    GitHubAuthenticationError,
+    GitHubRateLimitError,
+    GitHubRequestError
 )
 
 # Tests for user profile fetching
@@ -42,12 +47,91 @@ def test_fetch_user_profile_user_not_found():
         fake_response.status_code = 404
         mock_get.return_value = fake_response
 
-        result = fetch_user_profile(
-            username="testuser",
-            github_token="test-token"
-        )
+        with pytest.raises(GitHubUserNotFoundError):
+            fetch_user_profile(
+                username="testuser",
+                github_token="test-token"
+            )
 
-        assert result is None
+        assert mock_get.call_count == 1
+
+def test_fetch_user_profile_authentication_error():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 401
+        mock_get.return_value = fake_response
+
+        with pytest.raises(GitHubAuthenticationError):
+            fetch_user_profile(
+                username="testuser",
+                github_token="invalid-token"
+            )
+
+        assert mock_get.call_count == 1
+
+
+def test_fetch_user_profile_rate_limit_error():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 403
+        fake_response.headers = {
+            "X-RateLimit-Remaining": "0"
+        }
+        mock_get.return_value = fake_response
+
+        with pytest.raises(GitHubRateLimitError):
+            fetch_user_profile(
+                username="testuser",
+                github_token="test-token"
+            )
+
+        assert mock_get.call_count == 1
+
+
+def test_fetch_user_profile_timeout_error():
+    with patch("github_api.requests.get") as mock_get:
+        # Simulate a network timeout using side_effect
+        mock_get.side_effect = requests.exceptions.Timeout
+
+        with pytest.raises(GitHubRequestError):
+            fetch_user_profile(
+                username="testuser",
+                github_token="test-token"
+            )
+
+        assert mock_get.call_count == 1
+
+def test_fetch_user_profile_forbidden_other_than_rate_limit():
+    with patch("github_api.requests.get") as mock_get:
+        fake_response = Mock()
+        fake_response.status_code = 403
+        # Set remaining requests to something other than "0"
+        fake_response.headers = {
+            "X-RateLimit-Remaining": "42"
+        }
+        mock_get.return_value = fake_response
+
+        # It should fall back to a general GitHubRequestError
+        with pytest.raises(GitHubRequestError):
+            fetch_user_profile(
+                username="testuser",
+                github_token="test-token"
+            )
+
+        assert mock_get.call_count == 1
+
+
+def test_fetch_user_profile_connection_error():
+    with patch("github_api.requests.get") as mock_get:
+        # Simulate a network connection failure
+        mock_get.side_effect = requests.exceptions.ConnectionError
+
+        with pytest.raises(GitHubRequestError):
+            fetch_user_profile(
+                username="testuser",
+                github_token="test-token"
+            )
+
         assert mock_get.call_count == 1
 
 # Tests for repository fetching
