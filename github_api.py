@@ -102,79 +102,72 @@ def fetch_repositories(username, github_token):
 
         else:
             raise GitHubRequestError(f"GitHub request failed with status code {response.status_code}.")
-        
+
+def make_readme_entry(repo_name, has_readme, error=None):
+    return {"repo_name": repo_name, "has_readme": has_readme, "error": error}
+  
 def fetch_readme_data(username, repositories, github_token):
     readme_results = []
     request_headers = create_headers(token=github_token)
+    stop_reason = None
 
     for repository in repositories:
-        if not repository.get("fork"):
-            repo_name = repository.get("name")
-            readme_url = f"https://api.github.com/repos/{username}/{repo_name}/readme"
+        if repository.get("fork"):
+            continue
+
+        repo_name = repository.get("name")
+
+        if stop_reason:
+            readme_results.append(
+                make_readme_entry(repo_name, None, f"skipped: {stop_reason}")
+            )
+            continue
+
+        readme_url = f"https://api.github.com/repos/{username}/{repo_name}/readme"
             
-            try:
-                readme_response = requests.get(
-                    readme_url, headers=request_headers, timeout=10
-                )
+        try:
+            readme_response = requests.get(
+                readme_url, headers=request_headers, timeout=10
+            )
 
-            except requests.exceptions.Timeout:
-                print(f"Warning: README request timed out for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
-                continue
-            except requests.exceptions.ConnectionError:
-                print(f"Warning: Could not connect to GitHub while checking README for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
-                continue
-            except requests.exceptions.RequestException:
-                print(f"Warning: README request failed for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
-                continue
+        except requests.exceptions.Timeout:    
+            readme_results.append(make_readme_entry(repo_name, None, "timed out"))
+            continue
+        except requests.exceptions.ConnectionError:
+            readme_results.append(make_readme_entry(repo_name, None, "could not connect"))
+            continue
+        except requests.exceptions.RequestException:
+            readme_results.append(make_readme_entry(repo_name, None, "request failed"))
+            continue
 
-            if readme_response.status_code == 200:
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": True
-                }
-                readme_results.append(readme_data)
+        if readme_response.status_code == 200:
+            readme_results.append(make_readme_entry(repo_name, True))
 
-            elif readme_response.status_code == 404:
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": False
-                }
-                readme_results.append(readme_data)
-            elif readme_response.status_code == 401:
-                print(f"Warning: Authentication failed while checking README for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
-            elif readme_response.status_code == 403:
-                print(f"Warning: GitHub denied the README request for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
+        elif readme_response.status_code == 404:
+            readme_results.append(make_readme_entry(repo_name, False))
+        elif readme_response.status_code == 401:
+            stop_reason = "authentication failed"
+            readme_results.append(
+                make_readme_entry(repo_name, None, stop_reason)
+            )
+        elif readme_response.status_code == 403:
+            if readme_response.headers.get("X-RateLimit-Remaining") == "0":
+                stop_reason = "rate limit reached"
             else:
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
+                readme_results.append(
+                    make_readme_entry(repo_name, None, "access denied")
+                )
+                continue
+
+            readme_results.append(
+                make_readme_entry(repo_name, None, stop_reason)
+            )
+        else:
+            readme_results.append(
+                make_readme_entry(
+                    repo_name, None, f"status {readme_response.status_code}"
+                )
+            )
 
     return readme_results
 
