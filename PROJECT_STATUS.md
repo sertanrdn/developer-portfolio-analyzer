@@ -1,21 +1,20 @@
 
 # Developer Portfolio Analyzer
- 
+
 A Python application that analyzes a developer's public GitHub portfolio and presents factual, descriptive insights through a command-line interface and a Streamlit dashboard.
- 
+
 The project is primarily a learning project focused on Python and backend development. Its goal is to understand what a public GitHub portfolio communicates through repository metadata, programming languages, documentation, and activity—not to assign developers an arbitrary overall score.
- 
-> **Current status:** The core GitHub data-fetching and analysis functionality is implemented, and the Streamlit dashboard contains all six major sections plus a sticky section navigation bar. The ui_design branch is complete and ready for a pull request. The next planned work is better error handling in the API layer and the UI.
- 
+
+> **Current status:** The core GitHub data-fetching and analysis functionality is implemented, and the Streamlit dashboard contains all six major sections plus a sticky section navigation bar. The `ui_design` branch has been merged. Error handling (Phase B, step 7) is implemented on the `error_handling` branch. The next planned work is the API-layer architecture review (step 8).
+
 ## Table of contents
- 
+
 - [Project goals](#project-goals)
 - [Technology stack](#technology-stack)
 - [Features implemented](#features-implemented)
 - [Application architecture](#application-architecture)
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
-- [Environment configuration](#environment-configuration)
 - [Running the application](#running-the-application)
 - [Current UI design](#current-ui-design)
 - [Current issues and troubleshooting](#current-issues-and-troubleshooting)
@@ -23,14 +22,15 @@ The project is primarily a learning project focused on Python and backend develo
 - [Development workflow](#development-workflow)
 - [Learning objectives](#learning-objectives)
 - [Project principles](#project-principles)
+
 ---
- 
+
 ## Project goals
- 
+
 The Developer Portfolio Analyzer examines public GitHub information to help people understand how their projects are presented.
- 
+
 The application aims to:
- 
+
 - Retrieve public GitHub profile and repository information through the GitHub REST API.
 - Analyze repository structure, programming languages, documentation, metadata, and recent activity.
 - Distinguish original repositories from forks and identify archived repositories.
@@ -38,9 +38,9 @@ The application aims to:
 - Report observable facts instead of assigning a generic developer score.
 - Build practical Python and backend development skills through incremental implementation.
 The project is being developed incrementally. The CLI provides an initial environment for learning Python and API integration, while Streamlit provides a more visual way to present the analysis.
- 
+
 ## Technology stack
- 
+
 | Technology | Purpose |
 |---|---|
 | Python | Application logic and data analysis |
@@ -50,26 +50,26 @@ The project is being developed incrementally. The CLI provides an initial enviro
 | Streamlit | Interactive dashboard |
 | Altair | Language visualizations |
 | pytest | Testing dependency for the project |
- 
+
 Current pinned dependencies:
- 
+
 ```text
 requests==2.34.2
 python-dotenv==1.2.3
 pytest==9.1.1
 streamlit==1.64.0
 ```
- 
+
 Python is the main learning focus. The implementation favors readable code and introduces additional architecture or dependencies when there is a clear reason to do so.
- 
+
 ## Features implemented
- 
+
 ### 1. GitHub profile information
- 
+
 The application can fetch and process a public GitHub user profile.
- 
+
 The dashboard displays:
- 
+
 - Profile avatar.
 - Display name, falling back to the GitHub username when no name is available.
 - GitHub username.
@@ -81,20 +81,20 @@ The dashboard displays:
 - Following count.
 - Account creation year.
 The username input is stripped of surrounding whitespace, and an empty username is rejected before the application attempts to fetch the profile.
- 
+
 ### 2. Repository fetching and pagination
- 
+
 The GitHub API layer retrieves repositories through the user's public repositories endpoint.
- 
+
 Repository fetching supports pagination using:
- 
+
 - `per_page=100`
 - An incrementing `page` parameter.
 - Repeated requests until an empty page is returned.
 This allows the application to retrieve more than the first page of repositories.
- 
+
 The application processes repository information into a consistent structure containing fields such as:
- 
+
 - Repository name and URL.
 - Description.
 - Primary language.
@@ -105,96 +105,97 @@ The application processes repository information into a consistent structure con
 - Fork count.
 - Creation timestamp.
 - Last-pushed timestamp.
+
 ### 3. Repository overview
- 
+
 The repository overview summarizes the public repositories returned by the API.
- 
+
 It distinguishes:
- 
+
 - **Total repositories:** All repositories retrieved.
 - **Original repositories:** Repositories that are not forks.
 - **Forked repositories:** Repositories marked as forks.
 - **Archived repositories:** Archived original repositories.
 The dashboard presents the overview as three metric cards for original, forked, and archived repositories. The profile section separately displays the public repository count provided by GitHub.
- 
+
 ### 4. Programming language analysis
- 
+
 The application analyzes programming languages in two complementary ways.
- 
+
 #### Primary-language distribution
- 
+
 The analyzer examines GitHub's primary language field for each original repository.
- 
+
 It calculates language counts and percentages, while also tracking repositories without a primary language.
- 
+
 The dashboard displays the distribution in a donut-style chart with a corresponding language legend.
- 
+
 #### Languages across repositories
- 
+
 The application also fetches the GitHub `/languages` endpoint for each original repository.
- 
+
 This endpoint provides a more detailed view of the languages GitHub detects in a repository. The analyzer counts how many original repositories contain each language.
- 
+
 The dashboard displays these counts in a horizontal bar chart.
- 
+
 The application defines colors for common programming languages and uses a default color for languages not explicitly listed.
- 
+
 The analysis distinguishes between repositories with no detected language data and requests whose results are unknown. These situations should not be interpreted as equivalent.
- 
+
 ### 5. Portfolio metadata and README coverage
- 
+
 The application examines whether original repositories provide useful descriptive information.
- 
+
 #### Description coverage
- 
+
 Counts original repositories with and without a description and calculates the percentage that include one.
- 
+
 #### Topics coverage
- 
+
 Counts original repositories with and without GitHub topics and calculates the corresponding percentage.
- 
+
 #### README coverage
- 
+
 The API layer checks whether each original repository has a README.
- 
+
 The analyzer distinguishes three outcomes:
- 
+
 - README found.
 - README not found.
 - README status unknown because the request did not produce a reliable result.
 Coverage is calculated using known results, rather than incorrectly treating failed requests as repositories without READMEs.
- 
+
 The dashboard presents README, description, and topics coverage in three cards with percentages, progress bars, and repository counts.
- 
+
 ### 6. Repository activity
- 
+
 The activity analysis focuses on original repositories.
- 
+
 It:
- 
+
 - Reads repository `pushed_at` timestamps.
 - Sorts repositories by most recent update.
 - Counts repositories updated within the last 90 days.
 - Groups repository activity into four freshness periods.
 The periods displayed in the dashboard are:
- 
+
 | Period | Meaning |
 |---|---|
 | Last 90 days | Updated within the last 90 days |
 | 91–365 days | Updated between 91 days and one year ago |
 | 1–2 years | Updated between one and two years ago |
 | Over 2 years | Updated more than two years ago |
- 
+
 The dashboard also displays the three most recently updated original repositories and their update dates.
- 
+
 These observations describe public repository activity. They do not determine whether a developer is productive or whether a repository is good or bad.
- 
+
 ### 7. Repository cards
- 
+
 The dashboard displays original repositories as individual cards.
- 
+
 The cards can present:
- 
+
 - Repository name and GitHub link.
 - Description.
 - Primary language.
@@ -205,13 +206,13 @@ The cards can present:
 - Fork count.
 - Last-pushed date.
 Repositories are displayed in a three-column layout, with six repositories per page.
- 
+
 Pagination uses `st.session_state.repository_page` to retain the selected page across Streamlit reruns. After a new analysis, the repository page resets to page one.
- 
+
 ### 8. Streamlit dashboard
- 
+
 The Streamlit application currently contains the following sections:
- 
+
 1. Developer Profile
 2. Repository Overview
 3. Languages
@@ -220,15 +221,15 @@ The Streamlit application currently contains the following sections:
 6. Repositories
 7. Section navigation
 The dashboard includes a GitHub username input and an Analyze button. Analysis results are stored in `st.session_state`, allowing the dashboard to render from the stored result rather than requiring a new GitHub analysis on every interaction.
- 
+
 The interface is organized into separate modules under `ui/`, with shared styling maintained in `ui/styles.py`.
 
 The dashboard also includes a sticky, full-width navigation bar below Streamlit's header. It contains links with icons to all six sections and is defined in `ui/navigation.py`. The links point to anchors that Streamlit generates from each section heading (for example `#languages`), so renaming a heading requires updating its link.
- 
+
 ### 9. GitHub API request handling
- 
+
 The GitHub API module includes several basic request safeguards:
- 
+
 - A shared helper for constructing Bearer authentication headers.
 - Ten-second request timeouts.
 - Handling for timeout exceptions.
@@ -237,42 +238,53 @@ The GitHub API module includes several basic request safeguards:
 - Basic status handling for common responses, including 401, 403, and 404.
 - Basic rate-limit detection using GitHub response headers.
 - Partial results for some README and language requests that fail.
-The API functions generally print error messages and return `None` or partial data. Improving how the UI receives and presents these errors is a future task.
- 
+`fetch_user_profile` and `fetch_repositories` raise custom exceptions, all subclasses of `GitHubError` and defined in `github_api.py`:
+
+- `GitHubUserNotFoundError` (404)
+- `GitHubAuthenticationError` (401)
+- `GitHubRateLimitError` (403 with no requests remaining)
+- `GitHubRequestError` (timeouts, connection errors, other 403s and unexpected statuses)
+
+A failure on any repository page raises, so a partial repository list is never presented as complete.
+
+`fetch_readme_data` and `fetch_language_data` never raise and no longer print. They return one entry per original repository, with `None` meaning unknown. Each entry has an `"error"` key: `None` on success, a short reason otherwise. A 404 README is a confirmed `False`, not unknown. After a 401 or a rate limit, the remaining repositories are marked `"skipped: <reason>"` without sending further requests.
+
+The CLI and the dashboard catch `GitHubError`. The API layer reports technical facts, and the user-facing wording lives in `main.py` and `streamlit_app.py`.
+
 ---
- 
+
 ## Application architecture
- 
+
 The project currently separates data retrieval, analysis, command-line execution, and dashboard presentation.
- 
+
 ### Main responsibilities
- 
+
 **`github_api.py`**
- 
+
 Responsible for communication with GitHub, including profile fetching, repository pagination, README checks, and detailed language requests.
- 
+
 **`analysis.py`**
- 
+
 Responsible for processing API data and calculating repository summaries, language statistics, metadata coverage, README coverage, activity freshness, and repository presentation data.
- 
+
 **`main.py`**
- 
+
 The intended command-line entry point for coordinating the analysis workflow and presenting results in the terminal.
- 
+
 **`streamlit_app.py`**
- 
+
 Coordinates the dashboard workflow. It loads configuration, calls the API and analysis functions, stores the analysis result in session state, and renders the dashboard sections.
- 
+
 **`ui/`**
- 
+
 Contains the individual Streamlit presentation modules and shared CSS.
- 
+
 The CLI and Streamlit entry points currently perform similar orchestration. Reviewing and reducing this duplication is planned for a later architecture phase, not the current UI design work.
- 
+
 ## Project structure
- 
+
 The current dashboard and backend are organized approximately as follows:
- 
+
 ```text
 developer-portfolio-analyzer/
 ├── main.py
@@ -300,93 +312,94 @@ developer-portfolio-analyzer/
     ├── test_analysis.py
     └── test_github_api.py
 ```
- 
+
 The `.env` file is a local configuration file and must not be committed. It should be excluded by `.gitignore`.
- 
+
 ## Getting started
- 
+
 ### Prerequisites
- 
+
 - Python installed.
 - Git.
 - A GitHub account.
 - A GitHub personal access token for authenticated API requests.
 - A terminal and code editor.
+
 ### 1. Clone the repository
- 
+
 ```bash
 git clone <repository-url>
 cd developer-portfolio-analyzer
 ```
- 
+
 Replace `<repository-url>` with the actual GitHub repository URL.
- 
+
 ### 2. Create a virtual environment
- 
+
 On macOS or Linux:
- 
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
- 
+
 On Windows:
- 
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\activate
 ```
- 
+
 Use the virtual environment for installing dependencies and running the application.
- 
+
 ### 3. Install dependencies
- 
+
 ```bash
 python -m pip install -r requirements.txt
 ```
- 
+
 ### 4. Configure the GitHub token
- 
+
 Create a `.env` file in the project root:
- 
+
 ```dotenv
 GITHUB_TOKEN=your_github_token_here
 ```
- 
+
 Replace the placeholder with your own token. Do not commit the token or share it publicly.
- 
+
 The application uses `python-dotenv` to load environment variables from this file.
- 
+
 ## Running the application
- 
+
 ### Streamlit dashboard
- 
+
 From the project root, activate the virtual environment and run:
- 
+
 ```bash
 streamlit run streamlit_app.py
 ```
- 
+
 Streamlit should provide a local URL in the terminal. Open that URL in your browser.
- 
+
 Enter a GitHub username and select **Analyze** to load the profile and dashboard.
- 
+
 If the dashboard does not start, first check that the virtual environment is active and that the dependencies installed successfully.
- 
+
 ### Command-line interface
- 
+
 The project also has a `main.py` entry point intended for the CLI workflow.
- 
+
 ```bash
 python main.py
 ```
- 
-The exact CLI behavior should be verified against the current working-tree version of `main.py` before treating it as a supported, tested workflow.
- 
+
+The CLI prints the reason and exits with code 1 when the token, username, profile fetch or repository fetch fails. It also prints a warning for each README or language check that ended up unknown. It was checked manually with a valid and a nonexistent username. An invalid token and a network failure were not checked manually. `main.py` has no automated tests.
+
 ## Current UI design
- 
+
 The dashboard uses a dark navy theme with restrained indigo accents.
- 
+
 | Purpose | Color |
 |---|---|
 | Page background | `#0B1120` |
@@ -398,11 +411,11 @@ The dashboard uses a dark navy theme with restrained indigo accents.
 | Primary button | `#6366F1` |
 | Existing subtle divider | `#263449` |
 | Card border (set in `.streamlit/config.toml`) | `#475569` |
- 
+
 The shared CSS in `ui/styles.py` controls headings, section spacing, card content, language legends, coverage progress bars, activity rows, repository badges, buttons, and other presentation details.
- 
+
 The white strip at the top of the application has already been addressed by styling Streamlit's native header:
- 
+
 ```css
 header[data-testid="stHeader"] {
     background-color: #0B1120;
@@ -419,7 +432,7 @@ borderColor = "#475569"
 Streamlit's native widgets (the charts and the username input) intentionally keep their light styling. Setting `base = "dark"` was tried and rejected because the light panels were preferred.
 
 Vertical spacing between sections is controlled by `.section-header` in `ui/styles.py` (`margin-top: 1.75rem`, reduced from `3.5rem`).
- 
+
 The dashboard width is currently set to a maximum of `1180px`. It appeared narrow in earlier screenshots because the browser was zoomed out to 50%; at 100% zoom, the width was considered acceptable. Do not change the width as part of the border fix.
 
 ---
@@ -476,24 +489,33 @@ Any other narrow-screen problems found later should be fixed individually.
 
 ### 4. Error presentation in Streamlit
 
-**Status: Next planned work (Phase B, step 7).**
+**Status: Done on the `error_handling` branch (Phase B, step 7).**
 
-The API layer currently prints many error messages and returns `None` or partial results. That approach is not ideal for a browser interface.
+- The dashboard shows specific messages for an unknown user, an invalid token and a rate limit, and a generic message for other GitHub errors.
+- A failed repository fetch now shows a message. Before, it showed nothing.
+- The stored result is cleared at the start of each analysis, so a failed lookup no longer leaves the previous dashboard on screen.
+- The missing-token message appears when Analyze is clicked, not on page load.
+- A warning appears when README or language results are partial.
 
-Observed behavior: entering a username that does not exist shows only the generic message "Could not load this GitHub profile." in the dashboard. The specific cause (404, rate limit, bad token) is only printed to the terminal.
+**Known limits:**
 
-The application should present useful messages for cases such as invalid usernames, authentication failures, rate limits, network failures, and incomplete analysis results.
+- Invalid token, no network, a real rate limit and the partial-results warning were not checked manually. They are covered only by mocked API tests.
+- Timeouts, connection errors and unexpected statuses all raise `GitHubRequestError`, so the dashboard shows the exception text and not tailored advice.
+- The per-repository reasons in the `"error"` key are not shown in the dashboard.
+- The metadata cards say "X of N repositories" where N includes unknown results, but the percentage uses only known ones. This needs a UI fix on a later branch.
 
 ### 5. Testing and verification
 
-**Status: Backend tests pass. The dashboard was checked manually.**
+**Status: Backend tests pass. The dashboard and CLI were checked manually, with limited coverage.**
 
-- `python -m pytest` runs 19 tests (9 in `tests/test_analysis.py` and 10 in `tests/test_github_api.py`), and all pass.
-- The tests cover the API layer and the analysis functions. There are no automated UI tests.
-- The dashboard workflow was exercised manually in Chrome: navigation links, sticky behavior, pagination, card borders, and the phone and tablet widths.
-- The diff against `main` contains no changes to `github_api.py`, `analysis.py` or `main.py`.
+- `python -m pytest` runs 42 tests (9 in `tests/test_analysis.py` and 33 in `tests/test_github_api.py`), and all pass.
+- The tests cover the API layer and the analysis functions. All requests are mocked, with no live GitHub calls.
+- `main.py` and `streamlit_app.py` have no automated tests.
+- Checked manually in the dashboard: valid user, unknown user, missing token.
+- Checked manually in the CLI: valid user, unknown user.
+- `analysis.py` is unchanged on this branch.
 
-Future backend tests should cover API failure behavior, pagination, empty portfolios, timestamp handling, and unknown README or language results.
+Future tests should cover empty portfolios, timestamp handling, and the callers once the orchestration is refactored.
 
 ---
 
@@ -519,15 +541,15 @@ The roadmap is split into two parts: finishing the current `ui_design` branch an
 **Completion criterion:** Users can move between major sections without excessive manual scrolling.
 
 #### 3. Improve grouping and vertical rhythm - **Status: Done. Spacing reduced; regrouping sections was reviewed and not needed.**
- 
+
 - Review how the dashboard sections relate to each other.
 - Reduce unnecessary vertical scrolling where possible.
 - Keep cards readable and preserve the existing information hierarchy.
 - Do not change the overall width without evidence that it is needed.
 **Completion criterion:** The dashboard feels cohesive and is easier to scan.
- 
+
 #### 4. Check responsive behavior - **Status: Done at phone and tablet widths.**
- 
+
 - Check desktop, tablet, and mobile widths.
 - Fix observed wrapping, spacing, chart, button, or overflow problems.
 - Keep the existing desktop layout unless the testing reveals an actual issue.
@@ -554,18 +576,17 @@ Review:
 - Commit the completed UI changes on `ui_design`.
 - Prepare a concise pull request description.
 **Completion criterion:** The branch contains a coherent, tested UI polish pass without unrelated backend scope expansion.
- 
+
 ### Phase B — Future application improvements
- 
+
 These are follow-up tasks, not requirements for the current visual-design branch.
- 
-#### 7. Improve API and UI error handling
- 
-- Review missing-token behavior.
-- Improve how network errors, timeouts, authentication failures, rate limits, and server errors are represented.
-- Avoid treating failed requests as confirmed missing data.
-- Make the Streamlit UI show meaningful feedback when analysis cannot be completed.
-- Preserve useful partial results where appropriate.
+
+#### 7. Improve API and UI error handling - **Status: Done.**
+
+- Custom exceptions for profile and repository failures.
+- README and language checks keep going on failure, report unknown with a reason, and stop early after a 401 or a rate limit.
+- The CLI and the Streamlit UI show specific feedback, and partial results trigger a warning.
+- Missing-token behavior is handled in both entry points.
 
 #### 8. Review API-layer architecture
 
@@ -573,6 +594,8 @@ These are follow-up tasks, not requirements for the current visual-design branch
 - Reduce duplicated orchestration between the CLI and Streamlit where it makes sense.
 - Keep API fetching separate from analysis and presentation.
 - Avoid introducing abstractions that do not solve an actual problem.
+- The status-code checks are duplicated in `fetch_user_profile` and `fetch_repositories`. Consider a small shared helper.
+- `main.py` and `streamlit_app.py` repeat the same orchestration.
 
 #### 9. Build and expand automated tests
 
@@ -593,72 +616,75 @@ Possible areas to consider include:
 - Further activity or freshness insights.
 - Additional descriptive metadata, where reliable data is available.
 Any new signal should have a clear purpose and should communicate observable information. Do not add features merely to increase the number of metrics.
- 
+
 #### 11. Review the CLI workflow
- 
+
 - Confirm the CLI works reliably with the current API behavior.
 - Improve its handling of configuration and incomplete requests where needed.
 - Keep the CLI useful as a simple way to exercise and understand the backend.
+
 #### 12. Deployment
- 
+
 Once the dashboard and API behavior are stable:
- 
+
 - Choose a deployment platform.
 - Configure environment variables securely.
 - Test the deployed application.
 - Document any limitations, such as API rate limits or expected loading times.
+
 #### 13. Documentation and portfolio presentation
- 
+
 After the application reaches a stable milestone:
- 
+
 - Keep the README aligned with the implemented features.
 - Add setup and usage examples that have been verified.
 - Include representative screenshots once the design is finished.
 - Document the project's architecture and key learning outcomes.
 - Prepare a concise project description for a CV or LinkedIn portfolio.
+
 ---
- 
+
 ## Development workflow
- 
+
 The project is developed on feature branches so that each stage remains understandable and reviewable.
- 
+
 A typical workflow is:
- 
+
 ```bash
 git status
 git switch ui_design
 ```
- 
+
 Make and test the intended changes, then inspect the diff:
- 
+
 ```bash
 git diff
 git status
 ```
- 
+
 When the changes are ready, commit them with a message describing the work:
- 
+
 ```bash
 git add .
 git commit -m "Improve dashboard card styling"
 ```
- 
+
 Push the branch when appropriate:
- 
+
 ```bash
 git push
 ```
- 
+
 Use the actual branch name and review the staged changes before committing. Avoid committing `.env` or unrelated changes.
- 
+
 The current branch should stay focused on UI presentation, navigation, responsive behavior, and final UI verification. Backend robustness, broader refactoring, and new analysis features belong in later work.
- 
+
 ## Learning objectives
- 
+
 This project is intended to develop practical Python and backend skills through implementation, not simply produce an application as quickly as possible.
- 
+
 Key learning areas include:
- 
+
 - Python functions, dictionaries, lists, loops, and data transformations.
 - Working with external APIs using `requests`.
 - HTTP status codes, authentication, pagination, timeouts, and exceptions.
@@ -687,4 +713,4 @@ The implementation should remain readable and understandable to a developer lear
 
 ## Current next step
 
-Open the pull request for `ui_design` and merge it. Then start Phase B, step 7 (API and UI error handling) on a new branch, beginning with the generic "Could not load this GitHub profile." message.
+Merge the `error_handling` pull request. Then start Phase B, step 8 (API-layer architecture review) on a new branch. The "X of N repositories" wording on the metadata cards is a separate UI fix.
