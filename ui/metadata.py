@@ -17,6 +17,13 @@ def render_metadata(metadata_analysis, readme_analysis, repository_summary):
 
     readme_coverage, description_coverage, topics_coverage = st.columns(3)
 
+    readme_known = readme_analysis["with_readme"] + readme_analysis["without_readme"]
+    readme_unknown = readme_analysis["unknown_readme"]
+
+    readme_count_text = f"{readme_analysis['with_readme']} of {readme_known} repositories"
+    if readme_unknown:
+        readme_count_text += f" · {readme_unknown} unknown"
+
     with readme_coverage:
         with st.container(border=True):
             st.markdown(
@@ -33,8 +40,7 @@ def render_metadata(metadata_analysis, readme_analysis, repository_summary):
             ></div>
         </div>
         <div class="coverage-count">
-            {readme_analysis["with_readme"]} of
-            {repository_summary["original"]} repositories
+            {readme_count_text}
         </div>
     </div>
                 """,

@@ -1,5 +1,20 @@
 import requests
 
+class GitHubError(Exception):
+    pass
+
+class GitHubUserNotFoundError(GitHubError):
+    pass
+
+class GitHubAuthenticationError(GitHubError):
+    pass
+
+class GitHubRateLimitError(GitHubError):
+    pass
+
+class GitHubRequestError(GitHubError):
+    pass
+
 def create_headers(token):
     request_headers = {
         "Authorization": f"Bearer {token}"
@@ -15,36 +30,29 @@ def fetch_user_profile(username, github_token):
     try:
         response = requests.get(url, headers=request_headers, timeout=10)
     except requests.exceptions.Timeout:
-        print("Error: GitHub request timed out.")
-        return None
+        raise GitHubRequestError("GitHub request timed out.")
     except requests.exceptions.ConnectionError:
-        print("Error: Could not connect to GitHub.")
-        return None
+        raise GitHubRequestError("Could not connect to GitHub.")
     except requests.exceptions.RequestException:
-        print("Error: GitHub request failed.")
-        return None
+        raise GitHubRequestError("GitHub request failed due to a network or request error.")
 
     if response.status_code == 200:
         return response.json()
     
     elif response.status_code == 404:
-        print("Error: GitHub user not found.")
-        return None
+        raise GitHubUserNotFoundError("GitHub user not found.")
     elif response.status_code == 401:
-        print("Error: Authentication failed. Please check your GitHub token or credentials.")
-        return None
+        raise GitHubAuthenticationError("Authentication failed. Please check your GitHub token or credentials.")
     elif response.status_code == 403:
         remaining_requests = response.headers.get("X-RateLimit-Remaining")
 
         if remaining_requests == "0":
-            print("Rate-limit error: You have hit your GitHub API request limit.")
+            raise GitHubRateLimitError("You have hit your GitHub API request limit.")
         else:
-            print("Error: GitHub denied the request.")
+            raise GitHubRequestError("GitHub denied the request.")
 
-        return None
     else:
-        print(f"Error: GitHub request failed with status code {response.status_code}.")
-        return None
+        raise GitHubRequestError(f"GitHub request failed with status code {response.status_code}.")
 
 def fetch_repositories(username, github_token):
     # Get the repo data from github api
@@ -66,14 +74,11 @@ def fetch_repositories(username, github_token):
                 url, headers=request_headers, params=parameters, timeout=10
             )
         except requests.exceptions.Timeout:
-            print("Error: GitHub request timed out.")
-            return None
+            raise GitHubRequestError("GitHub request timed out.")
         except requests.exceptions.ConnectionError:
-            print("Error: Could not connect to GitHub.")
-            return None
+            raise GitHubRequestError("Could not connect to GitHub.")
         except requests.exceptions.RequestException:
-            print("Error: GitHub request failed.")
-            return None
+            raise GitHubRequestError("GitHub request failed due to a network or request error.")
 
         if response.status_code == 200:
             page_repositories = response.json()
@@ -84,165 +89,155 @@ def fetch_repositories(username, github_token):
             repositories.extend(page_repositories)
             page += 1
         elif response.status_code == 404:
-            print("Error: GitHub user not found.")
-            return None
+            raise GitHubUserNotFoundError("GitHub user not found.")
         elif response.status_code == 401:
-            print("Error: Authentication failed. Please check your GitHub token or credentials.")
-            return None
+            raise GitHubAuthenticationError("Authentication failed. Please check your GitHub token or credentials.")
         elif response.status_code == 403:
             remaining_requests = response.headers.get("X-RateLimit-Remaining")
 
             if remaining_requests == "0":
-                print("Rate-limit error: You have hit your GitHub API request limit.")
+                raise GitHubRateLimitError("You have hit your GitHub API request limit.")
             else:
-                print("Error: GitHub denied the request.")
+                raise GitHubRequestError("GitHub denied the request.")
 
-            return None
         else:
-            print(f"Error: GitHub request failed with status code {response.status_code}.")
-            return None
-        
+            raise GitHubRequestError(f"GitHub request failed with status code {response.status_code}.")
+
+def make_readme_entry(repo_name, has_readme, error=None):
+    return {"repo_name": repo_name, "has_readme": has_readme, "error": error}
+  
 def fetch_readme_data(username, repositories, github_token):
     readme_results = []
     request_headers = create_headers(token=github_token)
+    stop_reason = None
 
     for repository in repositories:
-        if not repository.get("fork"):
-            repo_name = repository.get("name")
-            readme_url = f"https://api.github.com/repos/{username}/{repo_name}/readme"
+        if repository.get("fork"):
+            continue
+
+        repo_name = repository.get("name")
+
+        if stop_reason:
+            readme_results.append(
+                make_readme_entry(repo_name, None, f"skipped: {stop_reason}")
+            )
+            continue
+
+        readme_url = f"https://api.github.com/repos/{username}/{repo_name}/readme"
             
-            try:
-                readme_response = requests.get(
-                    readme_url, headers=request_headers, timeout=10
+        try:
+            readme_response = requests.get(
+                readme_url, headers=request_headers, timeout=10
+            )
+
+        except requests.exceptions.Timeout:
+            readme_results.append(make_readme_entry(repo_name, None, "timed out"))
+            continue
+        except requests.exceptions.ConnectionError:
+            readme_results.append(make_readme_entry(repo_name, None, "could not connect"))
+            continue
+        except requests.exceptions.RequestException:
+            readme_results.append(make_readme_entry(repo_name, None, "request failed"))
+            continue
+
+        if readme_response.status_code == 200:
+            readme_results.append(make_readme_entry(repo_name, True))
+
+        elif readme_response.status_code == 404:
+            readme_results.append(make_readme_entry(repo_name, False))
+        elif readme_response.status_code == 401:
+            stop_reason = "authentication failed"
+            readme_results.append(
+                make_readme_entry(repo_name, None, stop_reason)
+            )
+        elif readme_response.status_code == 403:
+            if readme_response.headers.get("X-RateLimit-Remaining") == "0":
+                stop_reason = "rate limit reached"
+                readme_results.append(
+                    make_readme_entry(repo_name, None, stop_reason)
+                )
+            else:
+                readme_results.append(
+                    make_readme_entry(repo_name, None, "access denied")
                 )
 
-            except requests.exceptions.Timeout:
-                print(f"Warning: README request timed out for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
-                continue
-            except requests.exceptions.ConnectionError:
-                print(f"Warning: Could not connect to GitHub while checking README for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
-                continue
-            except requests.exceptions.RequestException:
-                print(f"Warning: README request failed for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
-                continue
-
-            if readme_response.status_code == 200:
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": True
-                }
-                readme_results.append(readme_data)
-
-            elif readme_response.status_code == 404:
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": False
-                }
-                readme_results.append(readme_data)
-            elif readme_response.status_code == 401:
-                print(f"Warning: Authentication failed while checking README for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
-            elif readme_response.status_code == 403:
-                print(f"Warning: GitHub denied the README request for {repo_name}.")
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
-            else:
-                readme_data = {
-                    "repo_name": repo_name,
-                    "has_readme": None
-                }
-                readme_results.append(readme_data)
+        else:
+            readme_results.append(
+                make_readme_entry(
+                    repo_name, None, f"status {readme_response.status_code}"
+                )
+            )
 
     return readme_results
+
+def make_language_entry(repo_name, languages, error=None):
+    return {"repo_name": repo_name, "languages": languages, "error": error}
 
 def fetch_language_data(username, repositories, github_token):
     language_results = []
     request_headers = create_headers(token=github_token)
+    stop_reason = None
     
     for repository in repositories:
-        if not repository.get("fork"):
-            repo_name = repository.get("name")
-            language_url = f"https://api.github.com/repos/{username}/{repo_name}/languages"
+        if repository.get("fork"):
+            continue
 
-            try:
-                language_response = requests.get(
-                    language_url, headers=request_headers, timeout=10
+        repo_name = repository.get("name")
+
+        if stop_reason:
+            language_results.append(
+                make_language_entry(repo_name, None, f"skipped: {stop_reason}")
+            )
+            continue
+
+        language_url = f"https://api.github.com/repos/{username}/{repo_name}/languages"
+
+        try:
+            language_response = requests.get(
+                language_url, headers=request_headers, timeout=10
+            )
+        except requests.exceptions.Timeout:
+            language_results.append(
+                make_language_entry(repo_name, None, "timed out")
+            )
+            continue
+
+        except requests.exceptions.ConnectionError:
+            language_results.append(
+                make_language_entry(repo_name, None, "could not connect")
+            )
+            continue
+
+        except requests.exceptions.RequestException:
+            language_results.append(
+                make_language_entry(repo_name, None, "request failed")
+            )
+            continue
+
+        if language_response.status_code == 200:
+            language_results.append(
+                make_language_entry(repo_name, language_response.json())
+            )
+        elif language_response.status_code == 401:
+            stop_reason = "authentication failed"
+            language_results.append(
+                make_language_entry(repo_name, None, stop_reason)
+            )
+        elif language_response.status_code == 403:
+            if language_response.headers.get("X-RateLimit-Remaining") == "0":
+                stop_reason = "rate limit reached"
+                language_results.append(
+                    make_language_entry(repo_name, None, stop_reason)
                 )
-            except requests.exceptions.Timeout:
-                print(f"Warning: Language request timed out for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
-                continue
-
-            except requests.exceptions.ConnectionError:
-                print(f"Warning: Could not connect to GitHub while checking languages for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
-                continue
-
-            except requests.exceptions.RequestException:
-                print(f"Warning: Language request failed for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
-                continue
-
-            if language_response.status_code == 200:
-                language_dict = language_response.json()
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": language_dict
-                }
-                language_results.append(language_data)
-            elif language_response.status_code == 401:
-                print(f"Warning: Authentication failed while checking languages for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
-            elif language_response.status_code == 403:
-                print(f"Warning: GitHub denied the languages request for {repo_name}.")
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
             else:
-                language_data = {
-                    "repo_name": repo_name,
-                    "languages": None
-                }
-                language_results.append(language_data)
+                language_results.append(
+                    make_language_entry(repo_name, None, "access denied")
+                )
+        else:
+            language_results.append(
+                make_language_entry(
+                    repo_name, None, f"status {language_response.status_code}"
+                )
+            )
 
     return language_results
