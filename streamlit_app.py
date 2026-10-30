@@ -8,22 +8,8 @@ from github_api import (
     GitHubAuthenticationError,
     GitHubRateLimitError,
     GitHubUserNotFoundError,
-    fetch_user_profile,
-    fetch_repositories,
-    fetch_language_data,
-    fetch_readme_data
 )
-from analysis import (
-    process_user_profile,
-    process_repositories,
-    get_repository_summary,
-    analyze_languages,
-    analyze_detailed_languages,
-    analyze_metadata_coverage,
-    analyze_readme_coverage,
-    analyze_recent_activity,
-    build_repository_details
-)
+from portfolio import analyze_portfolio
 
 from ui.profile import render_profile
 from ui.overview import render_repository_overview
@@ -97,108 +83,31 @@ if analyze_button:
         )
     else:
         try:
-            user_profile = fetch_user_profile(
+            analysis_result = analyze_portfolio(
                 username=cleaned_username,
                 github_token=github_token
             )
-
-            processed_user_profile = process_user_profile(
-                user_profile=user_profile
-            )
-
-            repositories = fetch_repositories(
-                username=cleaned_username,
-                github_token=github_token
-            )
-
-            processed_repos = process_repositories(
-                repositories=repositories
-            )
-
-            repository_summary = get_repository_summary(
-                processed_repositories=processed_repos
-            )
-
-            (
-                language_counts,
-                no_language_count,
-                primary_language_percentages
-            ) = analyze_languages(
-                processed_repositories=processed_repos
-            )
-
-            language_results = fetch_language_data(
-                username=cleaned_username,
-                repositories=processed_repos,
-                github_token=github_token
-            )
-
-            (
-                language_repo_counts,
-                no_language_data_count,
-                unknown_language_count
-            ) = analyze_detailed_languages(language_results)
-
-            metadata_analysis = analyze_metadata_coverage(
-                processed_repositories=processed_repos,
-                original_repositories=repository_summary["original"]
-            )
-
-            readme_results = fetch_readme_data(
-                username=cleaned_username,
-                repositories=processed_repos,
-                github_token=github_token
-            )
-
-            readme_analysis = analyze_readme_coverage(
-                readme_results=readme_results
-            )
-
-            (
-                sorted_repositories,
-                recently_active_count,
-                freshness_buckets
-            ) = analyze_recent_activity(
-                processed_repositories=processed_repos
-            )
-
-            repository_details = build_repository_details(
-                processed_repositories=processed_repos,
-                readme_results=readme_results,
-                language_results=language_results
-            )
-
-            analysis_result = {
-                "profile": processed_user_profile,
-                "repository_summary": repository_summary,
-                "primary_language_percentages": primary_language_percentages,
-                "detailed_language_counts": language_repo_counts,
-                "unknown_language_count": unknown_language_count,
-                "metadata_analysis": metadata_analysis,
-                "readme_analysis": readme_analysis,
-                "freshness_buckets": freshness_buckets,
-                "sorted_repositories": sorted_repositories,
-                "repository_details": repository_details,
-            }
 
             st.session_state.analysis_result = analysis_result
             st.session_state.repository_page = 1
 
         except GitHubUserNotFoundError:
             st.error(f"No GitHub user named '{cleaned_username}' was found.")
+
         except GitHubAuthenticationError:
             st.error(
                 "The app's GitHub token is invalid or expired. "
                 "Please check GITHUB_TOKEN in your .env file."
             )
+
         except GitHubRateLimitError:
             st.error(
                 "GitHub's request limit has been reached. "
                 "Please wait a while and try again."
             )
+
         except GitHubError as error:
             st.error(f"GitHub API error: {error}")
-
 
 # Render the dashboard using the stored analysis
 if st.session_state.analysis_result is not None:
