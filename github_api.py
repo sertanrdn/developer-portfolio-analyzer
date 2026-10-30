@@ -21,38 +21,49 @@ def create_headers(token):
     }
     return request_headers
 
+def _get_json(url, headers, params=None):
+    try:
+        response = requests.get(
+            url,
+            headers=headers,
+            params=params,
+            timeout=10
+        )
+    except requests.exceptions.Timeout:
+        raise GitHubRequestError("GitHub request timed out.")
+    except requests.exceptions.ConnectionError:
+        raise GitHubRequestError("Could not connect to GitHub.")
+    except requests.exceptions.RequestException:
+        raise GitHubRequestError(
+            "GitHub request failed due to a network or request error."
+        )
+
+    if response.status_code == 200:
+        return response.json()
+    elif response.status_code == 404:
+        raise GitHubUserNotFoundError("GitHub user not found.")
+    elif response.status_code == 401:
+        raise GitHubAuthenticationError(
+            "Authentication failed. Please check your GitHub token or credentials."
+        )
+    elif response.status_code == 403:
+        if response.headers.get("X-RateLimit-Remaining") == "0":
+            raise GitHubRateLimitError(
+                "You have hit your GitHub API request limit."
+            )
+        raise GitHubRequestError("GitHub denied the request.")
+    else:
+        raise GitHubRequestError(
+            f"GitHub request failed with status code {response.status_code}."
+        )
+
 def fetch_user_profile(username, github_token):
     # Get the profile data from github api
     url = f"https://api.github.com/users/{username}"
 
     request_headers = create_headers(token=github_token)
 
-    try:
-        response = requests.get(url, headers=request_headers, timeout=10)
-    except requests.exceptions.Timeout:
-        raise GitHubRequestError("GitHub request timed out.")
-    except requests.exceptions.ConnectionError:
-        raise GitHubRequestError("Could not connect to GitHub.")
-    except requests.exceptions.RequestException:
-        raise GitHubRequestError("GitHub request failed due to a network or request error.")
-
-    if response.status_code == 200:
-        return response.json()
-    
-    elif response.status_code == 404:
-        raise GitHubUserNotFoundError("GitHub user not found.")
-    elif response.status_code == 401:
-        raise GitHubAuthenticationError("Authentication failed. Please check your GitHub token or credentials.")
-    elif response.status_code == 403:
-        remaining_requests = response.headers.get("X-RateLimit-Remaining")
-
-        if remaining_requests == "0":
-            raise GitHubRateLimitError("You have hit your GitHub API request limit.")
-        else:
-            raise GitHubRequestError("GitHub denied the request.")
-
-    else:
-        raise GitHubRequestError(f"GitHub request failed with status code {response.status_code}.")
+    return _get_json(url, headers=request_headers)
 
 def fetch_repositories(username, github_token):
     # Get the repo data from github api
@@ -69,39 +80,17 @@ def fetch_repositories(username, github_token):
             "page": page
         }
 
-        try:
-            response = requests.get(
-                url, headers=request_headers, params=parameters, timeout=10
-            )
-        except requests.exceptions.Timeout:
-            raise GitHubRequestError("GitHub request timed out.")
-        except requests.exceptions.ConnectionError:
-            raise GitHubRequestError("Could not connect to GitHub.")
-        except requests.exceptions.RequestException:
-            raise GitHubRequestError("GitHub request failed due to a network or request error.")
+        page_repositories = _get_json(
+            url,
+            headers=request_headers,
+            params=parameters
+        )
 
-        if response.status_code == 200:
-            page_repositories = response.json()
-
-            if not page_repositories:
-                return repositories
+        if not page_repositories:
+            return repositories
         
-            repositories.extend(page_repositories)
-            page += 1
-        elif response.status_code == 404:
-            raise GitHubUserNotFoundError("GitHub user not found.")
-        elif response.status_code == 401:
-            raise GitHubAuthenticationError("Authentication failed. Please check your GitHub token or credentials.")
-        elif response.status_code == 403:
-            remaining_requests = response.headers.get("X-RateLimit-Remaining")
-
-            if remaining_requests == "0":
-                raise GitHubRateLimitError("You have hit your GitHub API request limit.")
-            else:
-                raise GitHubRequestError("GitHub denied the request.")
-
-        else:
-            raise GitHubRequestError(f"GitHub request failed with status code {response.status_code}.")
+        repositories.extend(page_repositories)
+        page += 1
 
 def make_readme_entry(repo_name, has_readme, error=None):
     return {"repo_name": repo_name, "has_readme": has_readme, "error": error}
