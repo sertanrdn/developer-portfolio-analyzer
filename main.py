@@ -2,24 +2,8 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from analysis import (
-    process_user_profile,
-    process_repositories,
-    get_repository_summary,
-    analyze_languages,
-    analyze_detailed_languages,
-    analyze_metadata_coverage,
-    analyze_recent_activity,
-    analyze_readme_coverage,
-    build_repository_details
-) 
-from github_api import (
-    GitHubError,
-    fetch_user_profile,
-    fetch_repositories,
-    fetch_readme_data,
-    fetch_language_data
-)
+from github_api import GitHubError
+from portfolio import analyze_portfolio
 
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")
@@ -39,32 +23,40 @@ else:
     print("GitHub username:", cleaned_username)
 
     try:
-        user_profile = fetch_user_profile(
-            username=cleaned_username, github_token=github_token
+        analysis_result = analyze_portfolio(
+            username=cleaned_username,
+            github_token=github_token
         )
-    
+
     except GitHubError as error:
-        print(f"Error fetching GitHub profile: {error}")
+        print(f"Error analyzing GitHub portfolio: {error}")
         sys.exit(1)
 
-    processed_user_profile = process_user_profile(user_profile)
+    # Extract results for terminal presentation
+    processed_user_profile = analysis_result["profile"]
+    repository_summary = analysis_result["repository_summary"]
+    original_repositories = repository_summary["original"]
 
-    try:
-        repositories = fetch_repositories(
-            username=cleaned_username, github_token=github_token
-        )
-    except GitHubError as error:
-        print(f"Error fetching repositories: {error}")
-        sys.exit(1)
-        
-    processed_repositories = process_repositories(repositories)
-    readme_results = fetch_readme_data(
-        username=cleaned_username, repositories=processed_repositories, github_token=github_token
-    )
-    language_results = fetch_language_data(
-        username=cleaned_username, repositories=processed_repositories, github_token=github_token
-    )
+    language_counts = analysis_result["language_counts"]
+    no_language_count = analysis_result["no_language_count"]
+    primary_language_percentages = analysis_result["primary_language_percentages"]
 
+    language_repo_counts = analysis_result["detailed_language_counts"]
+    no_language_data_count = analysis_result["no_language_data_count"]
+    unknown_language_count = analysis_result["unknown_language_count"]
+
+    metadata_analysis = analysis_result["metadata_analysis"]
+    readme_analysis = analysis_result["readme_analysis"]
+
+    sorted_repositories = analysis_result["sorted_repositories"]
+    recently_active_count = analysis_result["recently_active_count"]
+    freshness_buckets = analysis_result["freshness_buckets"]
+
+    readme_results = analysis_result["readme_results"]
+    language_results = analysis_result["language_results"]
+
+
+    # Print individual warnings
     for result in readme_results:
         if result.get("error"):
             print(
@@ -78,29 +70,6 @@ else:
                 f"Warning: language check for "
                 f"{result['repo_name']}: {result['error']}"
             )
-
-    repository_details = build_repository_details(
-        processed_repositories,
-        readme_results,
-        language_results
-    )
-
-    repository_summary = get_repository_summary(processed_repositories)
-    language_counts, no_language_count, primary_language_percentages = (
-        analyze_languages(processed_repositories)
-    )
-    language_repo_counts, no_language_data_count, unknown_language_count = analyze_detailed_languages(language_results)
-
-    original_repositories = repository_summary["original"]
-    metadata_analysis = analyze_metadata_coverage(
-        processed_repositories,
-        original_repositories
-    )
-    sorted_repositories, recently_active_count, freshness_buckets = (
-        analyze_recent_activity(processed_repositories)
-    )
-
-    readme_analysis = analyze_readme_coverage(readme_results)
 
     print("")
     print("GitHub Profile")

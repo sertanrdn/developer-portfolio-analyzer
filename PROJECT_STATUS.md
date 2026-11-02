@@ -5,7 +5,7 @@ A Python application that analyzes a developer's public GitHub portfolio and pre
 
 The project is primarily a learning project focused on Python and backend development. Its goal is to understand what a public GitHub portfolio communicates through repository metadata, programming languages, documentation, and activity—not to assign developers an arbitrary overall score.
 
-> **Current status:** The core GitHub data-fetching and analysis functionality is implemented, and the Streamlit dashboard contains all six major sections plus a sticky section navigation bar. The `ui_design` branch has been merged. Error handling (Phase B, step 7) is implemented on the `error_handling` branch. The next planned work is the API-layer architecture review (step 8).
+> **Current status:** The core GitHub data-fetching and analysis functionality is implemented, and the Streamlit dashboard contains all six major sections plus a sticky section navigation bar. The `ui_design` and `error_handling` branches have been merged. The API-layer architecture review (Phase B, step 8) is implemented on the `api_architecture` branch. The next planned work is expanding the automated tests (step 9).
 
 ## Table of contents
 
@@ -237,6 +237,7 @@ The GitHub API module includes several basic request safeguards:
 - General `requests` exception handling.
 - Basic status handling for common responses, including 401, 403, and 404.
 - Basic rate-limit detection using GitHub response headers.
+- A private helper, `_get_json`, performs the request and the status handling for `fetch_user_profile` and `fetch_repositories`. Its 404 message says "GitHub user not found", which is correct for both current callers but would need changing for other endpoints.
 - Partial results for some README and language requests that fail.
 `fetch_user_profile` and `fetch_repositories` raise custom exceptions, all subclasses of `GitHubError` and defined in `github_api.py`:
 
@@ -261,25 +262,27 @@ The project currently separates data retrieval, analysis, command-line execution
 
 **`github_api.py`**
 
-Responsible for communication with GitHub, including profile fetching, repository pagination, README checks, and detailed language requests.
+Responsible for communication with GitHub, including profile fetching, repository pagination, README checks, and detailed language requests. `fetch_user_profile` and `fetch_repositories` share one private helper, `_get_json`, which sends the request and converts failures into the custom exceptions.
 
 **`analysis.py`**
 
-Responsible for processing API data and calculating repository summaries, language statistics, metadata coverage, README coverage, activity freshness, and repository presentation data.
+Responsible for processing API data and calculating repository summaries, language statistics, metadata coverage, README coverage, activity freshness, and repository presentation data. It contains no network code.
+
+**`portfolio.py`**
+
+Provides `analyze_portfolio(username, github_token)`, the single place where the fetch, process and analyze steps are sequenced. It returns one dictionary with everything either entry point needs. It catches no exceptions, so each entry point keeps its own error wording. README and language results pass through unchanged, so unknown (`None`) is never turned into a confirmed negative.
 
 **`main.py`**
 
-The intended command-line entry point for coordinating the analysis workflow and presenting results in the terminal.
+The command-line entry point. It handles the token, username and `GitHubError`, calls `analyze_portfolio`, and prints the results.
 
 **`streamlit_app.py`**
 
-Coordinates the dashboard workflow. It loads configuration, calls the API and analysis functions, stores the analysis result in session state, and renders the dashboard sections.
+Coordinates the dashboard workflow. It loads configuration, calls `analyze_portfolio`, stores the result in session state, shows user-facing error messages, and renders the dashboard sections.
 
 **`ui/`**
 
 Contains the individual Streamlit presentation modules and shared CSS.
-
-The CLI and Streamlit entry points currently perform similar orchestration. Reviewing and reducing this duplication is planned for a later architecture phase, not the current UI design work.
 
 ## Project structure
 
@@ -291,6 +294,7 @@ developer-portfolio-analyzer/
 ├── github_api.py
 ├── analysis.py
 ├── streamlit_app.py
+├── portfolio.py
 ├── requirements.txt
 ├── README.md
 ├── PROJECT_STATUS.md
@@ -310,7 +314,8 @@ developer-portfolio-analyzer/
     └── styles.py
 └── tests
     ├── test_analysis.py
-    └── test_github_api.py
+    ├── test_github_api.py
+    └── test_portfolio.py
 ```
 
 The `.env` file is a local configuration file and must not be committed. It should be excluded by `.gitignore`.
@@ -508,11 +513,10 @@ Any other narrow-screen problems found later should be fixed individually.
 
 **Status: Backend tests pass. The dashboard and CLI were checked manually, with limited coverage.**
 
-- `python -m pytest` runs 42 tests (9 in `tests/test_analysis.py` and 33 in `tests/test_github_api.py`), and all pass.
-- The tests cover the API layer and the analysis functions. All requests are mocked, with no live GitHub calls.
+- `python -m pytest` runs 44 tests across `tests/test_analysis.py`, `tests/test_github_api.py` and `tests/test_portfolio.py`, and all pass.
+- The tests cover the API layer, the analysis functions and `analyze_portfolio`. All requests are mocked, with no live GitHub calls.
 - `main.py` and `streamlit_app.py` have no automated tests.
-- Checked manually in the dashboard: valid user, unknown user, missing token.
-- Checked manually in the CLI: valid user, unknown user.
+- Checked manually after the refactor, in both the dashboard and the CLI: valid user, unknown user, missing token.
 - `analysis.py` is unchanged on this branch.
 
 Future tests should cover empty portfolios, timestamp handling, and the callers once the orchestration is refactored.
@@ -588,14 +592,12 @@ These are follow-up tasks, not requirements for the current visual-design branch
 - The CLI and the Streamlit UI show specific feedback, and partial results trigger a warning.
 - Missing-token behavior is handled in both entry points.
 
-#### 8. Review API-layer architecture
+#### 8. Review API-layer architecture - **Status: Done.**
 
-- Review responsibilities across `main.py`, `github_api.py`, `analysis.py`, and `streamlit_app.py`.
-- Reduce duplicated orchestration between the CLI and Streamlit where it makes sense.
-- Keep API fetching separate from analysis and presentation.
-- Avoid introducing abstractions that do not solve an actual problem.
-- The status-code checks are duplicated in `fetch_user_profile` and `fetch_repositories`. Consider a small shared helper.
-- `main.py` and `streamlit_app.py` repeat the same orchestration.
+- Status-code and request-exception handling for the two raising fetchers now lives in `_get_json`.
+- The shared fetch, process and analyze sequence now lives in `portfolio.analyze_portfolio`, used by both the CLI and the dashboard.
+- `analysis.py` remains free of network code, and `github_api.py` does not import analysis.
+- **Deferred:** `fetch_readme_data` and `fetch_language_data` still duplicate their request loop. Their contract differs (they return entries and never raise), and the tests pin their error strings.
 
 #### 9. Build and expand automated tests
 
@@ -713,4 +715,4 @@ The implementation should remain readable and understandable to a developer lear
 
 ## Current next step
 
-Merge the `error_handling` pull request. Then start Phase B, step 8 (API-layer architecture review) on a new branch. The "X of N repositories" wording on the metadata cards is a separate UI fix.
+Merge the `api_architecture` pull request. Then start Phase B, step 9 (expand automated tests) on a new branch. The "X of N repositories" wording on the metadata cards is still a separate UI fix.
