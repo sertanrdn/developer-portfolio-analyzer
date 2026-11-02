@@ -41,6 +41,7 @@ def _get_json(url, headers, params=None):
     if response.status_code == 200:
         return response.json()
     elif response.status_code == 404:
+        # Currently used for GitHub user endpoints (profile and repositories).
         raise GitHubUserNotFoundError("GitHub user not found.")
     elif response.status_code == 401:
         raise GitHubAuthenticationError(
