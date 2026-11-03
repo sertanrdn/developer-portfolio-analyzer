@@ -299,7 +299,7 @@ developer-portfolio-analyzer/
 ├── README.md
 ├── PROJECT_STATUS.md
 ├── .gitignore
-├── .env
+├── .env.example
 ├── .streamlit/
     └── config.toml
 ├── ui/
@@ -534,7 +534,7 @@ These were found by reading the code and running the functions. They are documen
 
 ## Roadmap
 
-The roadmap is split into two parts: finishing the current `ui_design` branch and continuing the broader project afterward.
+The roadmap is split into completed application improvements and follow-up work.
 
 ### Phase A — Finish the current `ui_design` branch
 
@@ -581,14 +581,12 @@ Review:
 - Repository badges and pagination.
 **Completion criterion:** The design is consistent across all six dashboard sections.
 
-#### 6. Verify and finish the branch - **Status: Tests pass and the manual check is done. Remaining: open and merge the pull request.**
+#### 6. Verify and finish the branch - **Status: Done.**
 
-- Run the Streamlit app.
-- Run the tests that exist.
-- Inspect `git diff`.
-- Commit the completed UI changes on `ui_design`.
-- Prepare a concise pull request description.
-**Completion criterion:** The branch contains a coherent, tested UI polish pass without unrelated backend scope expansion.
+- Ran the existing automated tests.
+- Verified the Streamlit dashboard manually.
+- Reviewed the final changes and merged the `ui_design` branch.
+**Completion criterion:** The dashboard UI improvements are implemented, verified, and merged into the main branch.
 
 ### Phase B — Future application improvements
 
@@ -612,7 +610,7 @@ These are follow-up tasks, not requirements for the current visual-design branch
 
 The existing tests cover the API layer, the analysis functions and analyze_portfolio. Further edge-case tests (day boundaries, empty portfolios, pagination parameters) were reviewed and deliberately not added, because the project’s goal is learning rather than exhaustive coverage.
 
-#### 10. Review remaining analysis opportunities
+#### 10. Review remaining analysis opportunities - **Status: Deferred.**
 
 Evaluate whether further descriptive insights would materially improve the analyzer.
 
@@ -624,13 +622,13 @@ Possible areas to consider include:
 - Additional descriptive metadata, where reliable data is available.
 Any new signal should have a clear purpose and should communicate observable information. Do not add features merely to increase the number of metrics.
 
-#### 11. Review the CLI workflow
+#### 11. Review the CLI workflow - **Status: Deferred.**
 
 - Confirm the CLI works reliably with the current API behavior.
 - Improve its handling of configuration and incomplete requests where needed.
 - Keep the CLI useful as a simple way to exercise and understand the backend.
 
-#### 12. Deployment
+#### 12. Deployment - **Status: Planned.**
 
 Once the dashboard and API behavior are stable:
 
@@ -639,7 +637,7 @@ Once the dashboard and API behavior are stable:
 - Test the deployed application.
 - Document any limitations, such as API rate limits or expected loading times.
 
-#### 13. Documentation and portfolio presentation
+#### 13. Documentation and portfolio presentation — **Status: In progress.**
 
 After the application reaches a stable milestone:
 
@@ -653,18 +651,21 @@ After the application reaches a stable milestone:
 
 ## Development workflow
 
-The project is developed on feature branches so that each stage remains understandable and reviewable.
+The project is developed using Git branches to keep changes organized and reviewable.
 
 A typical workflow is:
 
 ```bash
 git status
-git switch ui_design
+git checkout main
+git pull origin main
+git checkout -b feature-branch
 ```
 
-Make and test the intended changes, then inspect the diff:
+Make the intended changes, then run the relevant checks and inspect the diff:
 
 ```bash
+python -m pytest
 git diff
 git status
 ```
@@ -673,18 +674,18 @@ When the changes are ready, commit them with a message describing the work:
 
 ```bash
 git add .
-git commit -m "Improve dashboard card styling"
+git commit -m "Describe the changes"
 ```
 
 Push the branch when appropriate:
 
 ```bash
-git push
+git push -u origin feature-branch
 ```
 
-Use the actual branch name and review the staged changes before committing. Avoid committing `.env` or unrelated changes.
+Create a pull request to merge the changes into `main`.
 
-The current branch should stay focused on UI presentation, navigation, responsive behavior, and final UI verification. Backend robustness, broader refactoring, and new analysis features belong in later work.
+Avoid committing `.env` or other secrets, and review staged changes before committing.
 
 ## Learning objectives
 
@@ -720,4 +721,14 @@ The implementation should remain readable and understandable to a developer lear
 
 ## Current next step
 
-Prepare for deployment (Phase B, step 12): run the pre-deployment checks (empty portfolio, HTML escaping of repository text, a second browser), then deploy and write the README (step 13).
+Prepare the application for deployment and public presentation.
+
+1. **Finalize documentation:** Update the README to reflect the implemented features, setup instructions, architecture, and dashboard design.
+2. **Perform final pre-deployment checks:**
+   - Check how the application handles a GitHub user with no public repositories.
+   - Verify that repository descriptions and other user-provided text are rendered safely.
+   - Check the dashboard in a second browser.
+3. **Deploy:** Choose a hosting platform, configure environment variables, deploy the application, and verify the live version.
+4. **Portfolio presentation:** Add representative screenshots and the deployed application link to the README, then prepare a project description for LinkedIn.
+
+No further analysis features or broad testing expansion are planned for this milestone.
