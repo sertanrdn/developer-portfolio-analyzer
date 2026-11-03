@@ -5,7 +5,7 @@ A Python application that analyzes a developer's public GitHub portfolio and pre
 
 The project is primarily a learning project focused on Python and backend development. Its goal is to understand what a public GitHub portfolio communicates through repository metadata, programming languages, documentation, and activity—not to assign developers an arbitrary overall score.
 
-> **Current status:** The core GitHub data-fetching and analysis functionality is implemented, and the Streamlit dashboard contains all six major sections plus a sticky section navigation bar. The `ui_design` and `error_handling` branches have been merged. The API-layer architecture review (Phase B, step 8) is implemented on the `api_architecture` branch. The next planned work is expanding the automated tests (step 9).
+> **Current status:** The core GitHub data-fetching and analysis functionality is implemented, and the Streamlit dashboard contains all six major sections plus a sticky section navigation bar. The ui_design, error_handling and api_architecture branches have been merged. The 44 automated tests (all mocked) are considered sufficient for this learning project, so step 9 was closed without further expansion. The next planned work is deployment preparation and documentation (steps 12–13).
 
 ## Table of contents
 
@@ -519,7 +519,16 @@ Any other narrow-screen problems found later should be fixed individually.
 - Checked manually after the refactor, in both the dashboard and the CLI: valid user, unknown user, missing token.
 - `analysis.py` is unchanged on this branch.
 
-Future tests should cover empty portfolios, timestamp handling, and the callers once the orchestration is refactored.
+Not covered by automated tests: freshness-bucket day boundaries, empty portfolios, Z timestamp parsing, and pagination request parameters.
+
+### 6. Known limitations
+
+These were found by reading the code and running the functions. They are documented, not fixed.
+
+- `datetime.fromisoformat` accepts GitHub's `Z` timestamps only on Python 3.11 and newer. `analysis.py` and `profile.py` rely on this, so deployment must use Python 3.11+.
+- Original repositories with no `pushed_at` value are left out of the freshness buckets, so the buckets can add up to fewer than the number of original repositories.
+- Freshness uses whole days: a push 90 days 23 hours ago still counts as "last 90 days".
+- The metadata cards say "X of N repositories" where N includes unknown results (see section 4).
 
 ---
 
@@ -599,13 +608,9 @@ These are follow-up tasks, not requirements for the current visual-design branch
 - `analysis.py` remains free of network code, and `github_api.py` does not import analysis.
 - **Deferred:** `fetch_readme_data` and `fetch_language_data` still duplicate their request loop. Their contract differs (they return entries and never raise), and the tests pin their error strings.
 
-#### 9. Build and expand automated tests
+#### 9. Build and expand automated tests - **Status: Intentionally closed.**
 
-- Establish a practical test structure using pytest.
-- Test repository summaries and analysis functions.
-- Test pagination and API response handling without depending on live GitHub requests.
-- Cover empty input data, missing values, timestamps, and unknown request results.
-- Add regression tests for bugs discovered during development.
+The existing tests cover the API layer, the analysis functions and analyze_portfolio. Further edge-case tests (day boundaries, empty portfolios, pagination parameters) were reviewed and deliberately not added, because the project’s goal is learning rather than exhaustive coverage.
 
 #### 10. Review remaining analysis opportunities
 
@@ -715,4 +720,4 @@ The implementation should remain readable and understandable to a developer lear
 
 ## Current next step
 
-Merge the `api_architecture` pull request. Then start Phase B, step 9 (expand automated tests) on a new branch. The "X of N repositories" wording on the metadata cards is still a separate UI fix.
+Prepare for deployment (Phase B, step 12): run the pre-deployment checks (empty portfolio, HTML escaping of repository text, a second browser), then deploy and write the README (step 13).
