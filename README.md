@@ -217,4 +217,4 @@ More detail is in [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ## Author
 
-[GitHub: sertanrdn](https://github.com/sertanrdn) · [LinkedIn](https://www.linkedin.com/in/sertan-d-b6769087/)
+[GitHub](https://github.com/sertanrdn) · [LinkedIn](https://www.linkedin.com/in/sertan-d-b6769087/)

@@ -172,7 +172,7 @@ def render_languages(
 
             st.altair_chart(
                 language_chart,
-                use_container_width=True
+                width="stretch"
             )
 
             for language, percentage in sorted_primary_languages:
@@ -213,5 +213,5 @@ def render_languages(
 
             st.altair_chart(
                 language_bar_chart,
-                use_container_width=True
+                width="stretch"
             )

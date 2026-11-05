@@ -60,7 +60,7 @@ with search_column:
     with button_column:
         analyze_button = st.button(
             "Analyze",
-            use_container_width=True,
+            width="stretch",
         )
 
 if "analysis_result" not in st.session_state:
