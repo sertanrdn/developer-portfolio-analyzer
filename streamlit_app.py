@@ -32,6 +32,12 @@ apply_global_styles()
 load_dotenv()
 github_token = os.getenv("GITHUB_TOKEN")
 
+if not github_token:
+    try:
+        github_token = st.secrets["GITHUB_TOKEN"]
+    except (FileNotFoundError, KeyError):
+        github_token = None
+
 st.markdown(
     """
     <div class="app-header">
@@ -79,7 +85,7 @@ if analyze_button:
         st.error("Please enter a GitHub username")
     elif not github_token:
         st.error(
-            "GitHub token not found. Please configure GITHUB_TOKEN in your .env file."
+            "GitHub token not found. Please configure GITHUB_TOKEN."
         )
     else:
         try:
@@ -97,7 +103,7 @@ if analyze_button:
         except GitHubAuthenticationError:
             st.error(
                 "The app's GitHub token is invalid or expired. "
-                "Please check GITHUB_TOKEN in your .env file."
+                "Please check your application configuration."
             )
 
         except GitHubRateLimitError:
