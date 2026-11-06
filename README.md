@@ -6,17 +6,15 @@ Instead of assigning a developer "score", it reports what a public portfolio act
 
 I started this project as a Python CLI to learn how to work with the GitHub REST API and analyze repository data. As the analysis grew, I added a Streamlit dashboard to make the findings easier to explore. The project is still designed as a learning exercise: the focus is on understanding the implementation, not building a large application as quickly as possible.
 
-<!-- Live demo: add the link here after deployment, for example:
-**Live demo:** https://your-app-name.streamlit.app
--->
+**Live demo:** [developer-portfolio-analyzer.streamlit.app](https://developer-portfolio-analyzer.streamlit.app/)
 
 ## Screenshots
 
 ![Dashboard header, section navigation and developer profile](docs/screenshots/dashboard-overview.png)
 
-![Language charts and portfolio metadata coverage](docs/screenshots/languages-metadata.png)
-
-![Repository activity and repository cards](docs/screenshots/activity-repositories.png)
+| Languages and metadata | Activity and repositories |
+|---|---|
+| ![Language charts and portfolio metadata coverage](docs/screenshots/languages-metadata.png) | ![Repository activity and repository cards](docs/screenshots/activity-repositories.png) |
 
 ## Why this project exists
 
