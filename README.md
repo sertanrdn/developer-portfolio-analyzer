@@ -13,7 +13,7 @@ I started this project as a Python CLI to learn how to work with the GitHub REST
 | Dashboard header and developer profile |
 |---|
 
-![Dashboard header, section navigation and developer profile](docs/screenshots/dashboard-overview.png)
+| ![Dashboard header, section navigation and developer profile](docs/screenshots/dashboard-overview.png) |
 
 | Languages and metadata | Activity and repositories |
 |---|---|
