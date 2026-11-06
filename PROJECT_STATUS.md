@@ -5,7 +5,7 @@ A Python application that analyzes a developer's public GitHub portfolio and pre
 
 The project is primarily a learning project focused on Python and backend development. Its goal is to understand what a public GitHub portfolio communicates through repository metadata, programming languages, documentation, and activity—not to assign developers an arbitrary overall score.
 
-> **Current status:** The core GitHub data-fetching and analysis functionality is implemented, and the Streamlit dashboard contains all six major sections plus a sticky section navigation bar. The ui_design, error_handling and api_architecture branches have been merged. The 44 automated tests (all mocked) are considered sufficient for this learning project, so step 9 was closed without further expansion. The next planned work is deployment preparation and documentation (steps 12–13).
+> **Current status:** The application is complete for its planned scope and is deployed at [developer-portfolio-analyzer.streamlit.app](https://developer-portfolio-analyzer.streamlit.app/). The Streamlit dashboard contains all six sections plus sticky navigation, the CLI is available through main.py, and the 44 automated tests (all mocked) pass. The README has setup instructions, screenshots and the live link.
 
 ## Table of contents
 
@@ -16,6 +16,7 @@ The project is primarily a learning project focused on Python and backend develo
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
 - [Running the application](#running-the-application)
+- [Deployment](#deployment)
 - [Current UI design](#current-ui-design)
 - [Current issues and troubleshooting](#current-issues-and-troubleshooting)
 - [Roadmap](#roadmap)
@@ -50,6 +51,7 @@ The project is being developed incrementally. The CLI provides an initial enviro
 | Streamlit | Interactive dashboard |
 | Altair | Language visualizations |
 | pytest | Testing dependency for the project |
+| Streamlit Community Cloud | Hosting for the live demo |
 
 Current pinned dependencies:
 
@@ -312,6 +314,11 @@ developer-portfolio-analyzer/
     ├── repositories.py
     ├── navigation.py
     └── styles.py
+├── docs/
+    └── screenshots/
+        ├── dashboard-overview.png
+        ├── languages-metadata.png
+        └── activity-repositories.png
 └── tests
     ├── test_analysis.py
     ├── test_github_api.py
@@ -324,7 +331,7 @@ The `.env` file is a local configuration file and must not be committed. It shou
 
 ### Prerequisites
 
-- Python installed.
+- Python 3.11 or newer.
 - Git.
 - A GitHub account.
 - A GitHub personal access token for authenticated API requests.
@@ -333,11 +340,9 @@ The `.env` file is a local configuration file and must not be committed. It shou
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/sertanrdn/developer-portfolio-analyzer.git
 cd developer-portfolio-analyzer
 ```
-
-Replace `<repository-url>` with the actual GitHub repository URL.
 
 ### 2. Create a virtual environment
 
@@ -400,6 +405,14 @@ python main.py
 ```
 
 The CLI prints the reason and exits with code 1 when the token, username, profile fetch or repository fetch fails. It also prints a warning for each README or language check that ended up unknown. It was checked manually with a valid and a nonexistent username. An invalid token and a network failure were not checked manually. `main.py` has no automated tests.
+
+## Deployment
+
+The app is hosted on Streamlit Community Cloud: [developer-portfolio-analyzer.streamlit.app](https://developer-portfolio-analyzer.streamlit.app/)
+
+- The GitHub token is stored in the app's Secrets settings in TOML format (`GITHUB_TOKEN = "..."`). It is not stored in the repository.
+- Python version selected in the app settings: <fill in; must be 3.11 or newer>.
+- All visitors share one token, so heavy use can reach GitHub's rate limit.
 
 ## Current UI design
 
@@ -504,7 +517,7 @@ Any other narrow-screen problems found later should be fixed individually.
 
 **Known limits:**
 
-- Invalid token, no network, a real rate limit and the partial-results warning were not checked manually. They are covered only by mocked API tests.
+- An invalid or expired token was seen in the running dashboard, which showed the expected message. No network, a real rate limit and the partial-results warning were not checked manually; they are covered only by mocked API tests.
 - Timeouts, connection errors and unexpected statuses all raise `GitHubRequestError`, so the dashboard shows the exception text and not tailored advice.
 - The per-repository reasons in the `"error"` key are not shown in the dashboard.
 - The metadata cards say "X of N repositories" where N includes unknown results, but the percentage uses only known ones. This needs a UI fix on a later branch.
@@ -529,6 +542,8 @@ These were found by reading the code and running the functions. They are documen
 - Original repositories with no `pushed_at` value are left out of the freshness buckets, so the buckets can add up to fewer than the number of original repositories.
 - Freshness uses whole days: a push 90 days 23 hours ago still counts as "last 90 days".
 - The metadata cards say "X of N repositories" where N includes unknown results (see section 4).
+- A repository card shows "Languages unavailable" both when the language request failed and when GitHub detected no languages in the repository.
+- Repository names, descriptions and topics are inserted into HTML strings without escaping (`ui/repositories.py`). Rendering of special characters such as `<` and `&` was <checked on the live app / not checked>.
 
 ---
 
@@ -628,7 +643,7 @@ Any new signal should have a clear purpose and should communicate observable inf
 - Improve its handling of configuration and incomplete requests where needed.
 - Keep the CLI useful as a simple way to exercise and understand the backend.
 
-#### 12. Deployment - **Status: Planned.**
+#### 12. Deployment - **Status: Done.**
 
 Once the dashboard and API behavior are stable:
 
@@ -637,7 +652,7 @@ Once the dashboard and API behavior are stable:
 - Test the deployed application.
 - Document any limitations, such as API rate limits or expected loading times.
 
-#### 13. Documentation and portfolio presentation — **Status: In progress.**
+#### 13. Documentation and portfolio presentation - **Status: Done.**
 
 After the application reaches a stable milestone:
 
@@ -720,15 +735,5 @@ The implementation should remain readable and understandable to a developer lear
 ---
 
 ## Current next step
-
-Prepare the application for deployment and public presentation.
-
-1. **Finalize documentation:** Update the README to reflect the implemented features, setup instructions, architecture, and dashboard design.
-2. **Perform final pre-deployment checks:**
-   - Check how the application handles a GitHub user with no public repositories.
-   - Verify that repository descriptions and other user-provided text are rendered safely.
-   - Check the dashboard in a second browser.
-3. **Deploy:** Choose a hosting platform, configure environment variables, deploy the application, and verify the live version.
-4. **Portfolio presentation:** Add representative screenshots and the deployed application link to the README, then prepare a project description for LinkedIn.
 
 No further analysis features or broad testing expansion are planned for this milestone.
